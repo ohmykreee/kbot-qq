@@ -1,0 +1,15 @@
+interface botconf {
+  url: string
+  token: string
+  debug: boolean
+  version: string
+  description: string
+}
+
+export const config :botconf = {
+  url: "",
+  token: "",
+  debug: true,
+  version: "",
+  description: ""
+}

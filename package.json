@@ -4,9 +4,9 @@
   "description": "A Kreee's QQ bot written with TypeScript.",
   "main": "src/app.ts",
   "scripts": {
-    "test": "npx ts-node src/app.ts",
+    "dev": "npx ts-node src/app.ts",
     "build": "npx tsc",
-    "serve": "npx tsc && node dist/app.js"
+    "serve": "npx tsc && node dist/src/app.js"
   },
   "repository": {
     "type": "git",
@@ -23,5 +23,10 @@
     "@types/node": "^18.6.1",
     "ts-node": "^10.9.1",
     "typescript": "^4.7.4"
+  },
+  "dependencies": {
+    "@types/ws": "^8.5.3",
+    "simple-node-logger": "^21.8.12",
+    "ws": "^8.8.1"
   }
 }

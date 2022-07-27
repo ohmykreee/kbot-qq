@@ -1,0 +1,27 @@
+{
+  "name": "kbot-qq",
+  "version": "1.0.0",
+  "description": "A Kreee's QQ bot written with TypeScript.",
+  "main": "src/app.ts",
+  "scripts": {
+    "test": "npx ts-node src/app.ts",
+    "build": "npx tsc",
+    "serve": "npx tsc && node dist/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ohmykreee/kbot-qq.git"
+  },
+  "author": "Kreee",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ohmykreee/kbot-qq/issues"
+  },
+  "homepage": "https://github.com/ohmykreee/kbot-qq#readme",
+  "devDependencies": {
+    "@tsconfig/node16": "^1.0.3",
+    "@types/node": "^18.6.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.7.4"
+  }
+}

@@ -82,6 +82,9 @@ function fetchResponse(msg: msg) :void {
       res.group_id = msg.group_id,
       res.text = res.text + `\n[CQ:at,qq=${res.user_id}]`
     }
+    if (config.debug) {
+      res.text = res.text + `\n(Debug mode)`
+    }
     makeResponse(res)
   })
 }

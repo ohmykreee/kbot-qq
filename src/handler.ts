@@ -39,7 +39,7 @@ export function msgHandler(msg: string, callback: (reply :string) => void) :void
             })
               .then(res => {
                 let hotlink :string = `${res.data.HotlinkUrl}${res.data.FileInfo.HotlinkId}`
-                reply = `https点点cloud点ohmykreee点top/share/hotlink/${res.data.FileInfo.HotlinkId}\n有效期3d.`
+                reply = `cloud [CQ:face,id=66] ohmykreee [CQ:face,id=67] top/share/hotlink/${res.data.FileInfo.HotlinkId}\n有效期3d.`
                 callback(reply)
               })
               .catch(function (error) {

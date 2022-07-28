@@ -1,9 +1,9 @@
 import {config} from "../botconfig"
 import WebSocket from "ws"
-import { msgHandler } from "./custom_handler"
+import { msgHandler } from "./handler"
 import { exit } from "process"
 
-export interface msg {
+interface msg {
   raw_text :string,
   text? :string,
   message_type :string,
@@ -12,7 +12,7 @@ export interface msg {
 }
 
 
-export interface msg_response {
+interface msg_response {
   message_type :string,
   text :string,
   user_id :number,
@@ -43,6 +43,7 @@ client.addEventListener('error', function(event) {
 })
 client.addEventListener('close' ,function(event) {
   log.error(`connection closed: ${event.reason}`)
+  process.exitCode = 1
 })
 
 function ifNeedResponed(data :any) :void {
@@ -68,7 +69,15 @@ function ifNeedResponed(data :any) :void {
 }
 
 function fetchResponse(msg: msg) :void {
-  const res :msg_response = msgHandler(msg)
+  let reply :string = msgHandler(msg.text as string)
+  const res :msg_response = {
+    message_type: msg.message_type,
+    text: reply,
+    user_id: msg.user_id,
+  }
+  if(res.text === '智商有点低，听不懂捏') {
+    log.warn(`mismatch text:${res.text}`)
+  }
   if (res.message_type === 'group') {
     res.group_id = msg.group_id,
     res.text = res.text + ` [CQ:at,qq=${res.user_id}]`

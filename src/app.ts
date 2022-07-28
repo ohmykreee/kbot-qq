@@ -69,20 +69,21 @@ function ifNeedResponed(data :any) :void {
 }
 
 function fetchResponse(msg: msg) :void {
-  let reply :string = msgHandler(msg.text as string)
-  const res :msg_response = {
-    message_type: msg.message_type,
-    text: reply,
-    user_id: msg.user_id,
-  }
-  if(res.text === '智商有点低，听不懂捏') {
-    log.warn(`mismatch text:${res.text}`)
-  }
-  if (res.message_type === 'group') {
-    res.group_id = msg.group_id,
-    res.text = res.text + ` [CQ:at,qq=${res.user_id}]`
-  }
-  makeResponse(res)
+  msgHandler(msg.text as string, function callback(reply) {
+    const res :msg_response = {
+      message_type: msg.message_type,
+      text: reply,
+      user_id: msg.user_id,
+    }
+    if(res.text === '智商有点低，听不懂捏') {
+      log.warn(`mismatch text:${msg.raw_text}`)
+    }
+    if (res.message_type === 'group') {
+      res.group_id = msg.group_id,
+      res.text = res.text + `\n[CQ:at,qq=${res.user_id}]`
+    }
+    makeResponse(res)
+  })
 }
 
 function makeResponse(res :msg_response) :void {
@@ -114,7 +115,7 @@ function makeResponse(res :msg_response) :void {
 
 function handleCallback(data :any) :void {
   if (data.echo) {
-    log.info(`callback: ${data.status}, echo:${data.echo}`)
+    log.info(`callback: ${data.status}, retcode:${data.retcode}, echo:${data.echo}`)
   } else if (data.post_type == 'meta_event' && data.meta_event_type == 'lifecycle') {
     log.info(`${data.sub_type} user_id=${data.self_id}`)
   } else if (data.post_type == 'meta_event' && data.meta_event_type == 'heartbeat') {

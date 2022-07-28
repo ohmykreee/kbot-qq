@@ -1,12 +1,12 @@
 {
   "name": "kbot-qq",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A Kreee's QQ bot written with TypeScript.",
   "main": "src/app.ts",
   "scripts": {
     "dev": "npx ts-node src/app.ts",
     "build": "npx tsc",
-    "serve": "npx tsc && node dist/src/app.js"
+    "server": "npx tsc && npx nodemon dist/src/app.js"
   },
   "repository": {
     "type": "git",
@@ -26,6 +26,8 @@
   },
   "dependencies": {
     "@types/ws": "^8.5.3",
+    "axios": "^0.27.2",
+    "nodemon": "^2.0.19",
     "simple-node-logger": "^21.8.12",
     "ws": "^8.8.1"
   }

@@ -12,7 +12,7 @@ export const config :botconf = {
   url: "",
   token: "",
   debug: false,
-  version: "v1.2.0",
+  version: "v1.2.2",
   description: "早期阶段：仅支持简单的关键词匹配和固定回复。",
   gokapiurl: "",
   gokapitoken: ""

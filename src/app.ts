@@ -1,6 +1,7 @@
-import {config} from "../botconfig"
-import WebSocket from "ws"
+import { config } from "../botconfig"
+import { WebSocket } from "ws"
 import { msgHandler } from "./handler"
+import { startIRC } from "./irc"
 import { exit } from "process"
 
 interface msg {
@@ -43,8 +44,9 @@ client.addEventListener('error', function(event) {
 })
 client.addEventListener('close' ,function(event) {
   log.error(`connection closed: ${event.reason}`)
-  process.exitCode = 1
+  exit(1)
 })
+startIRC()
 
 function ifNeedResponed(data :any) :void {
   if (data.raw_message) {
@@ -83,7 +85,7 @@ function fetchResponse(msg: msg) :void {
       res.text = res.text + `\n[CQ:at,qq=${res.user_id}]`
     }
     if (config.debug) {
-      res.text = res.text + `\n(Debug mode)`
+      res.text = res.text + `\n(Dev mode)`
     }
     makeResponse(res)
   })

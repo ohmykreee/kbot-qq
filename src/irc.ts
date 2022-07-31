@@ -50,7 +50,8 @@ function fetchMsg(msg :string) :void {
     let spliter :Array<string> = msg.split(' ')
     let spliterlen :number = spliter.length
     if (spliter[spliterlen - 2] === 'is') {
-      stats.reply = stats.reply + `\n${spliter[2].match(/\(([^)]+)\)/)![1]} (${spliter[spliterlen - 1].slice(0, -1)})`
+      let name_raw :string = spliter.slice(2. -2).join(' ')
+      stats.reply = stats.reply + `\n${name_raw.match(/\(([^)]+)\)/)![1]} (${spliter[spliterlen - 1].slice(0, -1)})`
     }
   }
   if (config.debug) {

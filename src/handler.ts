@@ -3,6 +3,7 @@ import { config } from "../botconfig"
 import { cutie } from "./list/cutie"
 import { vw50 } from "./list/kfc-vw50"
 import { food } from "./list/food"
+import { osuname } from "./list/osu"
 import { version } from '../package.json';
 import { getOSUStats } from "./irc"
 
@@ -18,7 +19,7 @@ log = SimpleNodeLogger.createSimpleLogger( opts )
 export function msgHandler(msg: string, callback: (reply :string) => void) :void {
   let reply :string = '智商有点低，听不懂捏'
   if (msg === 'help'|| msg === '帮助' || msg === 'h') {
-    reply = `支持：\n帮助/help/h\n关于\n在线\n色色\n星期四/星期几\n二次元\n动物/爆个照\n舔狗\n吃什么\nsh(上海证券交易所)/sz(深圳证券交易所)+股票代码\n谁最可爱`
+    reply = `支持：\n帮助/help/h\n关于\n在线\n色色\n星期四/星期几\n二次元\n动物/爆个照\n舔狗\n吃什么\nsh(上海证券交易所)/sz(深圳证券交易所)+股票代码\n查询列表\n谁最可爱`
     callback(reply)
 
   } else if (msg === '关于') {
@@ -43,8 +44,7 @@ export function msgHandler(msg: string, callback: (reply :string) => void) :void
               headers: {'apikey': config.gokapitoken, 'Content-Type': 'multipart/form-data'},
             })
               .then(res => {
-                let hotlink :string = `${res.data.HotlinkUrl}${res.data.FileInfo.HotlinkId}`
-                reply = `cloud [CQ:face,id=66] ohmykreee [CQ:face,id=67] top/share/hotlink/${res.data.FileInfo.HotlinkId}\n有效期3d.`
+                reply = `${res.data.FileInfo.HotlinkId}\n有效期3d`
                 callback(reply)
                 isBusy = false
               })
@@ -59,6 +59,14 @@ export function msgHandler(msg: string, callback: (reply :string) => void) :void
       .catch(function (error) {
         log.error(error)
       })
+
+  } else if (msg === '查询列表') {
+    let reply :string = ''
+    for (const user of osuname) {
+      reply = `${reply}${user.text}\n`
+    }
+    reply = reply + `(共 ${osuname.length} 项，预计用时 ${osuname.length * 0.6}秒)`
+    callback(reply)
 
   } else if (/谁最可爱/g.test(msg)) {
     reply = cutie[Math.floor(Math.random() * cutie.length)].text

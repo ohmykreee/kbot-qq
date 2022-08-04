@@ -5,6 +5,7 @@ interface botconf {
   description: string
   gokapiurl: string
   gokapitoken: string
+  ircintervalMin :number
 }
 
 export const config :botconf = {
@@ -15,5 +16,6 @@ export const config :botconf = {
   gokapiurl: "",
   gokapitoken: "",
   ircusername: "",
-  ircpassword: ""
+  ircpassword: "",
+  ircintervalMin: 10
 }

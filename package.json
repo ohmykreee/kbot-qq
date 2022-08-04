@@ -29,8 +29,6 @@
   "dependencies": {
     "axios": "^0.27.2",
     "install": "^0.13.0",
-    "irc-framework": "^4.12.1",
-    "irc-upd": "^0.11.0",
     "nodemon": "^2.0.19",
     "npm": "^8.15.1",
     "simple-node-logger": "^21.8.12",

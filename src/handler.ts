@@ -6,8 +6,7 @@ import { food } from "./list/food"
 import { osuname } from "./list/osu"
 import { version } from '../package.json';
 import { getOSUStats } from "./irc"
-
-let isBusy :boolean
+import { updateOSUStats } from "./irc"
 
 const SimpleNodeLogger = require('simple-node-logger'),
 	opts = {
@@ -19,7 +18,7 @@ log = SimpleNodeLogger.createSimpleLogger( opts )
 export function msgHandler(msg: string, callback: (reply :string) => void) :void {
   let reply :string = '智商有点低，听不懂捏'
   if (msg === 'help'|| msg === '帮助' || msg === 'h') {
-    reply = `支持：\n帮助/help/h\n关于\n在线\n色色\n星期四/星期几\n二次元\n动物/爆个照\n舔狗\n吃什么\nsh(上海证券交易所)/sz(深圳证券交易所)+股票代码\n查询列表\n谁最可爱`
+    reply = `支持：\n帮助/help/h\n关于\n在线\n色色\n星期四/星期几\n二次元\n动物/爆个照\n舔狗\n吃什么\nsh(上海证券交易所)/sz(深圳证券交易所)+股票代码\n查询列表\n更新在线列表\n谁最可爱`
     callback(reply)
 
   } else if (msg === '关于') {
@@ -30,8 +29,7 @@ export function msgHandler(msg: string, callback: (reply :string) => void) :void
     reply = 'Woof!'
     callback(reply)
 
-  } else if (msg === '就要色色！' && !isBusy) {
-    isBusy = true
+  } else if (msg === '就要色色！') {
     axios.get('https://api.waifu.im/random?is_nsfw=true')
       .then(res => {
         axios.get(res.data.images[0].url, { responseType: 'stream' })
@@ -46,7 +44,6 @@ export function msgHandler(msg: string, callback: (reply :string) => void) :void
               .then(res => {
                 reply = `${res.data.FileInfo.HotlinkId}\n有效期3d`
                 callback(reply)
-                isBusy = false
               })
               .catch(function (error) {
                 log.error(error)
@@ -61,24 +58,27 @@ export function msgHandler(msg: string, callback: (reply :string) => void) :void
       })
 
   } else if (msg === '查询列表') {
-    let reply :string = ''
+    let replytext :string = ''
     for (const user of osuname) {
-      reply = `${reply}${user.text}\n`
+      replytext = `${replytext}${user.text}\n`
     }
-    reply = reply + `(共 ${osuname.length} 项，预计用时 ${osuname.length * 0.6}秒)`
+    reply = replytext + `(共 ${osuname.length} 项，更新频率 ${config.ircintervalMin} 分钟)`
     callback(reply)
+
+  } else if (msg === '更新在线列表') {
+    updateOSUStats(function(replytext) {
+      reply = replytext
+      callback(reply)
+    })
 
   } else if (/谁最可爱/g.test(msg)) {
     reply = cutie[Math.floor(Math.random() * cutie.length)].text
     callback(reply)
 
-  } else if (/在线/g.test(msg) && !isBusy) {
-    isBusy = true
-    reply = new Date().getHours() > 22 || new Date().getHours() < 4 ? '卷王列表：':'在线列表：'
-    getOSUStats(function(stats) {
-      reply = `${reply}${stats}`
+  } else if (/在线/g.test(msg)) {
+    getOSUStats(function(replytext) {
+      reply = replytext
       callback(reply)
-      isBusy = false
     })
 
   } else if (/色色/g.test(msg) || /色图/g.test(msg)) {
@@ -86,12 +86,11 @@ export function msgHandler(msg: string, callback: (reply :string) => void) :void
     reply = no_horny[Math.floor(Math.random() * no_horny.length)]
     callback(reply)
 
-  } else if (/二次元/g.test(msg) && !isBusy) {
+  } else if (/二次元/g.test(msg)) {
     axios.get('https://api.yimian.xyz/img?type=moe&R18=false')
       .then(res => {
         reply = `[CQ:image,file=${res.request.protocol}//${res.request.host}${res.request.path}]`
         callback(reply)
-        isBusy = false
       })
       .catch(function (error) {
         log.error(error)
@@ -107,24 +106,21 @@ export function msgHandler(msg: string, callback: (reply :string) => void) :void
       callback(reply)
     } 
     
-  } else if (/舔狗/g.test(msg) && !isBusy) {
+  } else if (/舔狗/g.test(msg)) {
     axios.get('https://api.ixiaowai.cn/tgrj/index.php')
       .then(res => {
         reply = res.data as string
         callback(reply)
-        isBusy = false
       })
       .catch(function (error) {
         log.error(error)
       })
 
-  } else if ((/动物/g.test(msg) || /爆个照/g.test(msg)) && !isBusy) {
-    isBusy = true
+  } else if ((/动物/g.test(msg) || /爆个照/g.test(msg))) {
     axios.get('https://api.tinyfox.dev/img?animal=yote&json')
       .then(res => {
         reply = `[CQ:image,file=${res.request.protocol}//${res.request.host}${res.data.loc}]`
         callback(reply)
-        isBusy = false
       })
       .catch(function (error) {
         log.error(error)
@@ -137,11 +133,10 @@ export function msgHandler(msg: string, callback: (reply :string) => void) :void
   } else if (/吃什么/g.test(msg)) {
     reply = food[Math.floor(Math.random() * food.length)].text
     callback(reply)
+
   }
   
-  else if (isBusy) {
-    callback('正在处理之前的请求，请稍后再试...')
-  } else {
+ else {
     callback(reply)
   }
 

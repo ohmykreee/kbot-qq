@@ -18,7 +18,8 @@ const stats :stats = {
   count: 0,
   reply: '',
 }
-let callbackFunc :any
+let statsResult :string = ''
+let isBusy :boolean = false
 
 const stream  = net.connect({
   port: 6667,
@@ -35,13 +36,28 @@ export function startIRC() :void {
       fetchMsg(msg.message)
     }
   })
+  askBancho()
+  setInterval(() => {
+    askBancho()
+  }, config.ircintervalMin * 60000)
 }
 
 export function getOSUStats(callback: (reply :string) => void) :void {
-  stats.count = 0
-  stats.reply = ''
-  askBancho()
-  callbackFunc = callback
+  if (statsResult !== '') {
+    callback(statsResult)
+  } else {
+    log.error('getOSUStats: statsResult is empty')
+    callback('获取在线列表失败，请尝试执行命令：“更新在线列表”！')
+  }
+}
+
+export function updateOSUStats(callback: (reply :string) => void) :void {
+  if (!isBusy) {
+    callback('请求成功，正在更新在线列表...')
+    askBancho()
+  } else {
+    callback('正在执行定时更新，请稍后查询...')
+  }
 }
 
 function fetchMsg(msg :string) :void {
@@ -54,21 +70,34 @@ function fetchMsg(msg :string) :void {
       stats.reply = stats.reply + `\n${name_raw.match(/\(([^)]+)\)/)![1]} (${spliter[spliterlen - 1].slice(0, -1)})`
     }
   }
-  if (config.debug) {
-    log.info(`from BanchoBot: ${msg}`)
-  }
+  // if (config.debug) {
+  //   log.info(`from BanchoBot: ${msg}`)
+  // }
   if (stats.count === osuname.length) {
-    log.info(`getOSUStats: end of querying ${stats.count} players`)
-    callbackFunc(`${stats.reply}\n-----`)
+    if (config.debug) {
+      log.info(`getOSUStats: end of querying ${stats.count} players`)
+    }
+    const now = new Date()
+    statsResult = `${now.getHours() > 22 || now.getHours() < 4 ? '卷王列表':'在线列表'}（更新时间 ${now.getHours()}:${now.getMinutes().toLocaleString('en-US',{minimumIntegerDigits: 2})}）：${stats.reply}\n-----`
     stats.count = 0
     stats.reply = ''
+    isBusy = false
   }
 }
 
 async function askBancho() :Promise<void> {
-  log.info('askBancho: start querying')
-  for (const user of osuname) {
-    await new Promise(f => setTimeout(f, 500))
-    client.send('BanchoBot', `STATS ${user.text}`)
+  if (!isBusy) {
+    if (config.debug) {
+      log.info('askBancho: start querying')
+    }
+    isBusy = true
+    stats.count = 0
+    stats.reply = ''
+    for (const user of osuname) {
+      await new Promise(f => setTimeout(f, 500))
+      client.send('BanchoBot', `STATS ${user.text}`)
+    }
+  } else {
+    log.warn('askBancho: cannot start because isBusy = true')
   }
 }

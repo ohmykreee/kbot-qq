@@ -14,4 +14,5 @@ export const osuname :Array<{text: string}> = [
   {"text": "[Crz]Ghost"},
   {"text": "Echo_XF"},
   {"text": "zhaishi"},
+  {"text": "A179"},
 ]

@@ -20,6 +20,7 @@ const stats :stats = {
 }
 let statsResult :string = ''
 let isBusy :boolean = false
+let timeout :number
 
 const stream  = net.connect({
   port: 6667,
@@ -37,9 +38,16 @@ export function startIRC() :void {
     }
   })
   askBancho()
-  setInterval(() => {
+  timeout = Math.floor(Math.random() * (config.ircintervalMax - config.ircintervalMin + 1) + config.ircintervalMin)
+  queryTimer()
+}
+
+function queryTimer() :void {
+  setTimeout(() => {
     askBancho()
-  }, config.ircintervalMin * 60000)
+    timeout = Math.floor(Math.random() * (config.ircintervalMax - config.ircintervalMin + 1) + config.ircintervalMin)
+    queryTimer()
+  }, timeout * 60000);
 }
 
 export function getOSUStats(callback: (reply :string) => void) :void {

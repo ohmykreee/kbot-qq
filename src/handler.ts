@@ -1,5 +1,6 @@
 import axios from "axios"
 import { config } from "../botconfig"
+import { log } from "./logger"
 import { cutie } from "./list/cutie"
 import { vw50 } from "./list/kfc-vw50"
 import { food } from "./list/food"
@@ -8,14 +9,6 @@ import { version } from '../package.json';
 import { getOSUStats } from "./irc"
 import { updateOSUStats } from "./irc"
 
-// 初始化日志记录库
-const SimpleNodeLogger = require('simple-node-logger'),
-	opts = {
-		// logFilePath:'mylogfile.log',
-		timestampFormat:'YYYY-MM-DD HH:mm:ss.SSS'
-	},
-log = SimpleNodeLogger.createSimpleLogger( opts )
-
 /**
  * 处理消息并返回回复消息字符串
  *
@@ -23,7 +16,7 @@ log = SimpleNodeLogger.createSimpleLogger( opts )
  * 接受接收的消息的字符串，当该消息命中某种规则时，返回回复消息字符串
  *
  * @param msg - 接收消息的字符串
- * @returns 回调函数，返回值为字符串
+ * @param callback - 回调函数，返回值为字符串
  * 
  */
 export function msgHandler(msg: string, callback: (reply :string) => void) :void {

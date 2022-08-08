@@ -1,15 +1,8 @@
 import IRC from "slate-irc"
 import net from "net"
+import { log } from "./logger"
 import { config } from "../botconfig"
 import { osuname } from "./list/osu"
-
-// 初始化日志记录库
-const SimpleNodeLogger = require('simple-node-logger'),
-	opts = {
-		// logFilePath:'mylogfile.log',
-		timestampFormat:'YYYY-MM-DD HH:mm:ss.SSS'
-	},
-log = SimpleNodeLogger.createSimpleLogger( opts )
 
 // 用于临时存储查询结果，判断是否查询完成，查询前后要清空一次
 interface stats {
@@ -81,7 +74,7 @@ function queryTimer() :void {
  * @remarks
  * 当有来自 handler.ts 的查询请求时，从 {@link statsResult} 中获取结果字符串并通过回调函数返回
  *
- * @returns 回调函数，返回值为字符串
+ * @param callback - 回调函数，返回值为字符串
  * 
  */
 export function getOSUStats(callback: (reply :string) => void) :void {
@@ -100,7 +93,7 @@ export function getOSUStats(callback: (reply :string) => void) :void {
  * @remarks
  * 当有来自 handler.ts 的更新请求时，调用 {@link askBancho()} 并通过回调函数返回触发结果
  *
- * @returns 回调函数，返回值为字符串（成功或失败）
+ * @param callback - 回调函数，返回值为字符串（成功或失败）
  * 
  */
 export function updateOSUStats(callback: (reply :string) => void) :void {
@@ -142,16 +135,12 @@ function fetchMsg(msg :string) :void {
   }
 
   // 如果在开发模式下，输出所有来自 BanchoBot 的消息至日志，因为输出内容过于多所以注释禁用
-  // if (config.debug) {
-  //   log.info(`from BanchoBot: ${msg}`)
-  // }
+  // log.debug(`from BanchoBot: ${msg}`)
 
   // 判断是否完成查询（查询计数 === 被查询总数）
   if (stats.count === osuname.length) {
-    // 如在开发模式下，输出查询结束日志
-    if (config.debug) {
-      log.info(`getOSUStats: end of querying ${stats.count} players`)
-    }
+    // 输出查询结束日志
+    log.debug(`getOSUStats: end of querying ${stats.count} players`)
     const now = new Date() // 用于输出查询时时间，和判断是否需要使用“卷王”称号
     // 将最终查询结果转存入查询结果变量中
     statsResult = `${now.getHours() > 22 || now.getHours() < 4 ? '卷王列表':'在线列表'}（更新时间 ${now.getHours()}:${now.getMinutes().toLocaleString('en-US',{minimumIntegerDigits: 2})}）：${stats.reply}\n-----`
@@ -173,10 +162,8 @@ function fetchMsg(msg :string) :void {
 async function askBancho() :Promise<void> {
   // 判断是否有锁
   if (!isBusy) {
-    // 如在开发模式，输出开始查询的日志
-    if (config.debug) {
-      log.info('askBancho: start querying')
-    }
+    // 输出开始查询的日志
+    log.debug('askBancho: start querying')
     // 上锁
     isBusy = true
     // 清空临时查询变量内内容

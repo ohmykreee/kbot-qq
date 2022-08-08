@@ -6,6 +6,7 @@ interface botconf {
   gokapiurl: string
   gokapitoken: string
   ircintervalMin :number
+  ircintervalMax :number
 }
 
 export const config :botconf = {
@@ -18,4 +19,5 @@ export const config :botconf = {
   ircusername: "",
   ircpassword: "",
   ircintervalMin: 10
+  ircintervalMax: 3
 }

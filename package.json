@@ -31,7 +31,6 @@
     "install": "^0.13.0",
     "nodemon": "^2.0.19",
     "npm": "^8.15.1",
-    "simple-node-logger": "^21.8.12",
     "slate-irc": "^0.9.1",
     "ws": "^8.8.1"
   }

@@ -2,7 +2,7 @@ import { config } from "../botconfig"
 import { WebSocket } from "ws"
 import { msgHandler } from "./handler"
 import { startIRC } from "./irc"
-import { exit } from "process"
+import { log } from "./logger"
 
 // 用于定义用于存储传入消息的变量
 interface msg {
@@ -30,14 +30,6 @@ interface msg_params {
   auto_escape? :boolean
 }
 
-// 初始化日志记录库
-const SimpleNodeLogger = require('simple-node-logger'),
-	opts = {
-		// logFilePath:'mylogfile.log',
-		timestampFormat:'YYYY-MM-DD HH:mm:ss.SSS'
-	},
-log = SimpleNodeLogger.createSimpleLogger( opts )
-
 // 初始化 WebSocket，并传入事件触发函数
 const client = new WebSocket(config.url + '?access_token=' + config.token)
 client.addEventListener('message', function (event) {
@@ -47,8 +39,7 @@ client.addEventListener('error', function(event) {
   log.error(`websocket error: ${event.error}`)
 })
 client.addEventListener('close' ,function(event) {
-  log.error(`connection closed: ${event.reason}`)
-  exit(1)
+  log.fatal(`connection closed: ${event.reason}`)
 })
 // 启动 irc.ts 中的 slate-irc 初始化
 startIRC()
@@ -144,8 +135,7 @@ function makeResponse(res :msg_response) :void {
     msg_params.group_id = res.group_id
   // 如果 message_type 不是 group 或是 private，则输出错误并终止程序
   } else if (res.message_type !== 'group' && res.message_type !== 'private') {
-  log.error(`makeResponse: message_type is out of range: ${res.message_type}`)
-  exit(1)
+  log.fatal(`makeResponse: message_type is out of range: ${res.message_type}`)
   }
   // 构建发送给 go-cqhttp 的消息主体
   const msg_send :object = {

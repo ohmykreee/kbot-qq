@@ -17,6 +17,8 @@ const stats :stats = {
 let statsResult :string = ''
 // 锁，避免一次性向 BanchoBot 提交多次查询
 let isBusy :boolean = false
+// 撞锁计数，如果多次撞锁则强制终止程序，等待 daemon 重启程序
+let isBusyCounter :number = 0
 // 用于定时查询间隔（分钟），为一一定范围内的随机整数值
 let timeout :number
 
@@ -137,8 +139,8 @@ function fetchMsg(msg :string) :void {
   // 如果在开发模式下，输出所有来自 BanchoBot 的消息至日志，因为输出内容过于多所以注释禁用
   // log.debug(`from BanchoBot: ${msg}`)
 
-  // 判断是否完成查询（查询计数 === 被查询总数）
-  if (stats.count === osuname.length) {
+  // 判断是否完成查询（查询计数 > 被查询总数-1）
+  if (stats.count > (osuname.length - 1)) {
     // 输出查询结束日志
     log.debug(`getOSUStats: end of querying ${stats.count} players`)
     const now = new Date() // 用于输出查询时时间，和判断是否需要使用“卷王”称号
@@ -147,8 +149,9 @@ function fetchMsg(msg :string) :void {
     // 清空临时查询变量内内容
     stats.count = 0
     stats.reply = ''
-    // 解锁
+    // 解锁,清空撞锁计数
     isBusy = false
+    isBusyCounter = 0
   }
 }
 
@@ -175,6 +178,12 @@ async function askBancho() :Promise<void> {
       client.send('BanchoBot', `STATS ${user.text}`)
     }
   } else {
-    log.warn('askBancho: cannot start because isBusy = true')
+    // 如果撞锁多次，则强制停止程序
+    if (isBusyCounter > 2) {
+      log.fatal('askBancho: cannot start because isBusy = true, exit.')
+    } else {
+      isBusyCounter = isBusyCounter + 1
+      log.warn(`askBancho: cannot start because isBusy = true, counter ${isBusyCounter}`)
+    }
   }
 }

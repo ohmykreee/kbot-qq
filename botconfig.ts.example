@@ -2,22 +2,28 @@ interface botconf {
   url: string
   token: string
   debug: boolean
+  adminqq: number
   description: string
   gokapiurl: string
   gokapitoken: string
   ircintervalMin :number
   ircintervalMax :number
+  maxloghistory :number
+  logfile :string
 }
 
 export const config :botconf = {
   url: "",
   token: "",
   debug: false,
+  adminqq: 1234567890,
   description: "早期阶段：仅支持简单的关键词匹配和固定回复。",
   gokapiurl: "",
   gokapitoken: "",
   ircusername: "",
   ircpassword: "",
-  ircintervalMin: 10
-  ircintervalMax: 3
+  ircintervalMin: 10,
+  ircintervalMax: 3,
+  maxloghistory: 100,
+  logfile: './log.txt'
 }

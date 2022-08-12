@@ -19,11 +19,24 @@ import { updateOSUStats } from "./irc"
  * @param callback - 回调函数，返回值为字符串
  * 
  */
-export function msgHandler(msg: string, callback: (reply :string) => void) :void {
+export function msgHandler(msg :string, callback: (reply :string) => void) :void {
   // 定义用于存储回复消息字符的变量，并赋予“没有命中规则的默认回复”值
   let reply :string = '智商有点低，听不懂捏'
   if (msg === 'help'|| msg === '帮助' || msg === 'h') {
-    reply = `支持：\n帮助/help/h\n关于\n在线\n色色\n星期四/星期几\n二次元\n动物/爆个照\n舔狗\n吃什么\nsh(上海证券交易所)/sz(深圳证券交易所)+股票代码\n查询列表\n更新在线列表\n谁最可爱`
+    reply = `支持：\n
+帮助/help/h：输出所有可用命令\n
+关于：返回有关这个沙雕的一切\n
+在线：返回 osu! 查询列表里在线玩家\n
+查询列表：返回 osu! 在线查询列表里的所有人\n
+更新在线列表：立即请求一次 osu! 在线列表的更新\n
+吃什么：不知道今天中午/晚上吃什么？问我！\n
+色色：并没有，或者说暗号错了？\n
+星期四/星期几：星期四？想什么呢！\n
+二次元：来一张（给好孩子看的）二次元图片\n
+动物/爆个照：本沙雕的照片\n
+舔狗：瞬间化身舔狗！\n
+sh(上海证券交易所)/sz(深圳证券交易所)+股票代码(无空格)：如果代码错误的话会直接返回空图片\n
+谁最可爱：才不告诉你捏！`
     callback(reply)
 
   } else if (msg === '关于') {

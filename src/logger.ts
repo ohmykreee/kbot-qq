@@ -1,6 +1,10 @@
 import { exit } from 'process'
 import { config } from '../botconfig'
- 
+import { adminNotify } from './app'
+
+// 用于存储以往的日志，即将改为文件读写操作
+let logHistory :Array<{text :string}> = []
+
 /**
  * 封装日志格式化输出
  *
@@ -29,7 +33,9 @@ export const log = {
  */
 function logDebug(text :string) :void {
   if (config.debug) {
-    console.log(`${getDateString()} [DEBUG]: ${text}`)
+    const reply :string = `${getDateString()} [DEBUG]: ${text}`
+    logHistory.push({text: reply})
+    console.log(reply)
   }
 }
 
@@ -40,7 +46,9 @@ function logDebug(text :string) :void {
  * 
  */
 function logInfo(text :string) :void {
-  console.log(`${getDateString()} [INFO]: ${text}`)
+  const reply :string = `${getDateString()} [INFO]: ${text}`
+  logHistory.push({text: reply})
+  console.log(reply)
 }
 
 /**
@@ -50,7 +58,9 @@ function logInfo(text :string) :void {
  * 
  */
 function logWarn(text :string) :void {
-  console.log(`${getDateString()} [WARN]: ${text}`)
+  const reply :string = `${getDateString()} [WARN]: ${text}`
+  logHistory.push({text: reply})
+  console.log(reply)
 }
 
 /**
@@ -63,7 +73,10 @@ function logWarn(text :string) :void {
  * 
  */
 function logError(text :string) :void {
-  console.log(`${getDateString()} [ERROR]: ${text}`)
+  const reply :string = `${getDateString()} [ERROR]: ${text}`
+  adminNotify(reply)
+  logHistory.push({text: reply})
+  console.log(reply)
   process.exitCode = 1
 }
 
@@ -71,14 +84,19 @@ function logError(text :string) :void {
  * 输出 Fatal 级别的日志
  *
  * @remarks
- * 输出日志同时以异常代码（1）退出程序
+ * 输出日志后，延时5秒以异常代码（1）退出程序
  * 
  * @param text - 日志需要输出的字符串
  * 
  */
  function logFatal(text :string) :void {
-  console.log(`${getDateString()} [FATAL]: ${text}`)
-  exit(1)
+  const reply :string = `${getDateString()} [FATAL]: ${text}`
+  adminNotify(reply)
+  logHistory.push({text: reply})
+  console.log(reply)
+  setTimeout(() => {
+    exit(1)
+  }, 5000)
 }
 
 /**
@@ -93,4 +111,18 @@ function getDateString() :string {
   const offset = dateObject.getTimezoneOffset()
   const now :string = new Date(dateObject.getTime() - (offset*60*1000)).toISOString()
   return `[${now.slice(0, 10)} ${now.slice(11, -1)}]`
+}
+
+/**
+ * 获取历史日志
+ *
+ * @remarks
+ * 返回指定数目的最近日志，若请求数目大于当前日志数目，则返回当前所有日志。若当前无日志，则返回一个空数组。
+ *
+ * @param count - 请求返回日志的数目
+ * @param callback - 回调函数，返回值为一个包含指定数目日志的数组
+ * 
+ */
+export function readLog(count :number, callback:(logs :Array<{text :string}>) => void) :void {
+  callback(logHistory.slice(-count))
 }

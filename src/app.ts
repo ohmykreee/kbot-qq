@@ -2,6 +2,7 @@ import { config } from "../botconfig"
 import { WebSocket } from "ws"
 import { msgHandler } from "./handler"
 import { startIRC } from "./irc"
+import { adminHandler } from "./admin"
 import { log } from "./logger"
 
 // 用于定义用于存储传入消息的变量
@@ -72,6 +73,12 @@ function ifNeedResponed(data :any) :void {
       } else {
         fetchResponse(msg)
       }
+    // 判断前缀是否为 kbot/Kbot且来自管理员，如是则为管理员命令并除去前5个字符
+    } else if (/^[Kk]bot/g.test(msg.raw_text) && msg.user_id === config.adminqq) {
+      msg.text = msg.raw_text.slice(5)
+      log.info(`[${msg.user_id}] [Admin] ${msg.text}`)
+      // 直接传递给 admin.ts 的 adminHandler() 处理
+      adminHandler(msg.text)
     }
   } else {
     // 若判断为非消息，则传入 handleCallback 进行下一步处理
@@ -163,6 +170,7 @@ function handleCallback(data :any) :void {
   // 判断是否为生命周期事件
   } else if (data.post_type == 'meta_event' && data.meta_event_type == 'lifecycle') {
     log.info(`${data.sub_type} user_id=${data.self_id}`)
+    adminNotify(`${data.sub_type} user_id=${data.self_id}`)
   // 判断是否为心跳事件
   } else if (data.post_type == 'meta_event' && data.meta_event_type == 'heartbeat') {
     log.info(`heartbeat interval=${data.interval}`)
@@ -170,4 +178,29 @@ function handleCallback(data :any) :void {
   } else {
     log.warn(`unhandled: ${JSON.stringify(data)}`)
   }
+}
+
+/**
+ * 发送私聊消息给管理员
+ *
+ * @remarks
+ * 触发后发送单个消息给管理员，通过调用 {@link makeResponse()} 实现
+ *
+ * @param msg - 发送消息的字符串
+ * 
+ */
+export function adminNotify(msg :string) :void {
+  const msg_params :msg_params = {
+    message: `${msg}\n(for Admin)`,
+    user_id: config.adminqq,
+    message_type: "private"
+  }
+  // 构建发送给 go-cqhttp 的消息主体
+  const msg_send :object = {
+    "action": "send_msg" as string,
+    "params": msg_params as msg_params,
+    "echo": `Send to admin ${msg_params.user_id}`
+  }
+  //通过 WebSocket 发送消息给 go-cqhttp
+  client.send(JSON.stringify(msg_send))
 }

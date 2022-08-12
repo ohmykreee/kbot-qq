@@ -20,7 +20,7 @@ restart/重启/stop/停止：停止程序并等待 daemon 重启程序\n
   } else if (msg === 'restart' || msg === '重启' || msg === 'stop' || msg === '停止') {
     adminNotify(`请求成功，将在3秒后关闭程序，并等待 daemon 重启程序...`)
     setTimeout(() => {
-      exit(0)
+      exit(2)
     }, 3000)
 
   } else if (/日志/g.test(msg) || /log/g.test(msg)) {

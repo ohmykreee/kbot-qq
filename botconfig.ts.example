@@ -2,7 +2,7 @@ interface botconf {
   url: string
   token: string
   debug: boolean
-  adminqq: number
+  adminqq: Array<number>
   description: string
   gokapiurl: string
   gokapitoken: string
@@ -16,7 +16,7 @@ export const config :botconf = {
   url: "",
   token: "",
   debug: false,
-  adminqq: 1234567890,
+  adminqq: [1234567890,0987654321],
   description: "早期阶段：仅支持简单的关键词匹配和固定回复。",
   gokapiurl: "",
   gokapitoken: "",
@@ -25,5 +25,5 @@ export const config :botconf = {
   ircintervalMin: 10,
   ircintervalMax: 3,
   maxloghistory: 100,
-  logfile: './log.txt'
+  logfile: './log.txt'  // 暂时还没有用
 }

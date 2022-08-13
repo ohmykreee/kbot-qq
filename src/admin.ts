@@ -9,18 +9,26 @@ import { readLog } from "./logger";
  * 接受来自管理员消息的字符串，当该消息命中某种规则时，直接调用 {@link adminNotify()} 回复
  *
  * @param msg - 接收消息的字符串
+ * @param callback - 回调函数，返回值为字符串
  * 
  */
-export function adminHandler(msg :string) :void {
+export function adminHandler(msg :string, callback: (reply :string) => void ) :void {
   if (msg === 'help'|| msg === '帮助' || msg === 'h') {
-    adminNotify(`所有可用命令：\n
-restart/重启/stop/停止：停止程序并等待 daemon 重启程序\n
+    callback(`所有可用命令：\n
+restart/重启：以异常状态停止程序并等待 daemon 重启程序\n
+stop/停止：无退出码停止程序，如果程序此前有异常则会被 daemon 重启\n
 日志/log [数字]：获取最近指定数目的日志`)
 
-  } else if (msg === 'restart' || msg === '重启' || msg === 'stop' || msg === '停止') {
-    adminNotify(`请求成功，将在3秒后关闭程序，并等待 daemon 重启程序...`)
+  } else if (msg === 'restart' || msg === '重启') {
+    callback(`请求成功，将在3秒后以异常状态关闭程序，并等待 daemon 重启程序...`)
     setTimeout(() => {
       exit(2)
+    }, 3000)
+
+  } else if (msg === 'stop' || msg === '停止') {
+    callback(`请求成功，将在3秒后关闭程序...`)
+    setTimeout(() => {
+      exit()
     }, 3000)
 
   } else if (/日志/g.test(msg) || /log/g.test(msg)) {
@@ -32,11 +40,11 @@ restart/重启/stop/停止：停止程序并等待 daemon 重启程序\n
     readLog(count, function(logs) {
       let reply :string = ''
       for (const context of logs) {
-        reply = `${reply}${context.text}\n`
+        reply = `${reply}\n${context.text}\n`
       }
-      adminNotify(reply)
+      callback(reply)
     })
   } else {
-    adminNotify('命令错误，请使用命令“帮助”来获取所有可用命令！')
+    callback('命令错误，请使用命令“帮助”来获取所有可用命令！')
   }
 }

@@ -73,12 +73,11 @@ function ifNeedResponed(data :any) :void {
       } else {
         fetchResponse(msg)
       }
-    // 判断前缀是否为 kbot/Kbot且来自管理员，如是则为管理员命令并除去前5个字符
-    } else if (/^[Kk]bot/g.test(msg.raw_text) && msg.user_id === config.adminqq) {
+    // 判断前缀是否为 kbot/Kbot且来自管理员的私聊，如是则为管理员命令并除去前5个字符
+    } else if (/^[Kk]bot/g.test(msg.raw_text) && config.adminqq.includes(msg.user_id) && msg.message_type === 'private') {
       msg.text = msg.raw_text.slice(5)
       log.info(`[${msg.user_id}] [Admin] ${msg.text}`)
-      // 直接传递给 admin.ts 的 adminHandler() 处理
-      adminHandler(msg.text)
+      fetchResponse(msg, true)
     }
   } else {
     // 若判断为非消息，则传入 handleCallback 进行下一步处理
@@ -91,35 +90,54 @@ function ifNeedResponed(data :any) :void {
  * 获取回复内容
  *
  * @remarks
- * 将来自 {@link ifNeedResponed()} 接收的消息字符串传递给 {@link msgHandler()} ,经过简单处理后并构造回复所需要的 object，传递给 {@link makeResponse()}
+ * 将来自 {@link ifNeedResponed()} 接收的消息字符串传递给 {@link msgHandler()} （管理员消息会传递给 {@link adminHandler()} ）,经过简单处理后并构造回复所需要的 object，传递给 {@link makeResponse()}
  *
  * @param msg - 接收消息的 object
+ * @param isAdmin - 消息是否来自管理员（可选）
  * 
  */
-function fetchResponse(msg: msg) :void {
-  // 执行来自 handler.ts 的 msgHandler()，并通过回调函数获取文字结果
-  msgHandler(msg.text as string, function callback(reply) {
-    const res :msg_response = {
-      message_type: msg.message_type,
-      text: reply,
-      user_id: msg.user_id,
-    }
-    // 判断是否返回没有命中规则的默认回复，是则写入日志警告
-    if(res.text === '智商有点低，听不懂捏') {
-      log.warn(`mismatch text:${msg.raw_text}`)
-    }
-    // 判断是否为群消息，如是则在消息结尾加上at，并传入群号
-    if (res.message_type === 'group') {
-      res.group_id = msg.group_id,
-      res.text = res.text + `\n[CQ:at,qq=${res.user_id}]`
-    }
-    // 判断是否在开发模式，如是则在消息结尾加上 (Dev mode)
-    if (config.debug) {
-      res.text = res.text + `\n(Dev mode)`
-    }
-    // 传入消息至 makeResponse()，回复消息
-    makeResponse(res)
-  })
+function fetchResponse(msg: msg, isAdmin? :boolean) :void {
+  // 是否为管理员的控制消息
+  if (isAdmin) {
+    // 执行来自 admin.ts 的 adminHandler()，并通过回调函数获取文字结果
+    adminHandler(msg.text as string, function (reply) {
+      const res :msg_response = {
+        message_type: 'private',
+        text: reply,
+        user_id: msg.user_id,
+      }
+      // 判断是否在开发模式，如是则在消息结尾加上 (Dev mode)
+      if (config.debug) {
+        res.text = res.text + `\n(Dev mode)`
+      }
+      // 传入消息至 makeResponse()，回复消息
+      makeResponse(res)
+    })
+  } else {
+    // 执行来自 handler.ts 的 msgHandler()，并通过回调函数获取文字结果
+    msgHandler(msg.text as string, function (reply) {
+      const res :msg_response = {
+        message_type: msg.message_type,
+        text: reply,
+        user_id: msg.user_id,
+      }
+      // 判断是否返回没有命中规则的默认回复，是则写入日志警告
+      if(res.text === '智商有点低，听不懂捏') {
+        log.warn(`mismatch text:${msg.raw_text}`)
+      }
+      // 判断是否为群消息，如是则在消息结尾加上at，并传入群号
+      if (res.message_type === 'group') {
+        res.group_id = msg.group_id,
+        res.text = res.text + `\n[CQ:at,qq=${res.user_id}]`
+      }
+      // 判断是否在开发模式，如是则在消息结尾加上 (Dev mode)
+      if (config.debug) {
+        res.text = res.text + `\n(Dev mode)`
+      }
+      // 传入消息至 makeResponse()，回复消息
+      makeResponse(res)
+    })
+  }
 }
 
 /**
@@ -190,17 +208,19 @@ function handleCallback(data :any) :void {
  * 
  */
 export function adminNotify(msg :string) :void {
-  const msg_params :msg_params = {
-    message: `${msg}\n(for Admin)`,
-    user_id: config.adminqq,
-    message_type: "private"
+  for (const QQid of config.adminqq) {
+    const msg_params :msg_params = {
+      message: `${msg}\n(for Admin)`,
+      user_id: QQid,
+      message_type: "private"
+    }
+    // 构建发送给 go-cqhttp 的消息主体
+    const msg_send :object = {
+      "action": "send_msg" as string,
+      "params": msg_params as msg_params,
+      "echo": `Send to admin ${msg_params.user_id}`
+    }
+    //通过 WebSocket 发送消息给 go-cqhttp
+    client.send(JSON.stringify(msg_send))
   }
-  // 构建发送给 go-cqhttp 的消息主体
-  const msg_send :object = {
-    "action": "send_msg" as string,
-    "params": msg_params as msg_params,
-    "echo": `Send to admin ${msg_params.user_id}`
-  }
-  //通过 WebSocket 发送消息给 go-cqhttp
-  client.send(JSON.stringify(msg_send))
 }

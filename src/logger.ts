@@ -2,8 +2,8 @@ import { exit } from 'process'
 import { config } from '../botconfig'
 import { adminNotify } from './app'
 
-// 用于存储以往的日志，即将改为文件读写操作
-let logHistory :Array<{text :string}> = []
+// 用于存储以往的日志，以后改为文件读写操作
+const logHistory :Array<{text :string}> = []
 
 /**
  * 封装日志格式化输出
@@ -34,7 +34,7 @@ export const log = {
 function logDebug(text :string) :void {
   if (config.debug) {
     const reply :string = `${getDateString()} [DEBUG]: ${text}`
-    logHistory.push({text: reply})
+    saveLog(reply)
     console.log(reply)
   }
 }
@@ -47,7 +47,7 @@ function logDebug(text :string) :void {
  */
 function logInfo(text :string) :void {
   const reply :string = `${getDateString()} [INFO]: ${text}`
-  logHistory.push({text: reply})
+  saveLog(reply)
   console.log(reply)
 }
 
@@ -59,7 +59,7 @@ function logInfo(text :string) :void {
  */
 function logWarn(text :string) :void {
   const reply :string = `${getDateString()} [WARN]: ${text}`
-  logHistory.push({text: reply})
+  saveLog(reply)
   console.log(reply)
 }
 
@@ -75,7 +75,7 @@ function logWarn(text :string) :void {
 function logError(text :string) :void {
   const reply :string = `${getDateString()} [ERROR]: ${text}`
   adminNotify(reply)
-  logHistory.push({text: reply})
+  saveLog(reply)
   console.log(reply)
   process.exitCode = 1
 }
@@ -92,7 +92,7 @@ function logError(text :string) :void {
  function logFatal(text :string) :void {
   const reply :string = `${getDateString()} [FATAL]: ${text}`
   adminNotify(reply)
-  logHistory.push({text: reply})
+  saveLog(reply)
   console.log(reply)
   setTimeout(() => {
     exit(1)
@@ -111,6 +111,23 @@ function getDateString() :string {
   const offset = dateObject.getTimezoneOffset()
   const now :string = new Date(dateObject.getTime() - (offset*60*1000)).toISOString()
   return `[${now.slice(0, 10)} ${now.slice(11, -1)}]`
+}
+
+/**
+ * 保存历史日志以供查询
+ *
+ * @remarks
+ * 目前是保存在 {@link logHistory} 数组中，并且每次执行会删除超过上限的日志
+ *
+ * @param logtext - 需要保存的日志字符串
+ * 
+ */
+function saveLog(logtext :string) :void {
+  logHistory.push({text: logtext})
+  if (logHistory.length > config.maxloghistory) {
+    logHistory.splice(0, logHistory.length - config.maxloghistory)
+    log.debug('logHistory trim has been triggered.')
+  }
 }
 
 /**

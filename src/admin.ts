@@ -1,5 +1,5 @@
 import { exit } from "process";
-import { adminNotify } from "./app"
+import { text2img } from "./utils";
 import { readLog } from "./logger";
 
 /**
@@ -14,10 +14,12 @@ import { readLog } from "./logger";
  */
 export function adminHandler(msg :string, callback: (reply :string) => void ) :void {
   if (msg === 'help'|| msg === '帮助' || msg === 'h') {
-    callback(`所有可用命令：\n
+    const reply :string = 
+`所有可用命令：\n
 restart/重启：以异常状态停止程序并等待 daemon 重启程序\n
 stop/停止：无退出码停止程序，如果程序此前有异常则会被 daemon 重启\n
-日志/log [数字]：获取最近指定数目的日志`)
+日志/log [数字]：获取最近指定数目的日志`
+    callback(text2img(reply))
 
   } else if (msg === 'restart' || msg === '重启') {
     callback(`请求成功，将在3秒后以异常状态关闭程序，并等待 daemon 重启程序...`)
@@ -40,9 +42,9 @@ stop/停止：无退出码停止程序，如果程序此前有异常则会被 da
     readLog(count, function(logs) {
       let reply :string = ''
       for (const context of logs) {
-        reply = `${reply}\n${context.text}\n`
+        reply = `${reply}${context.text}\n`
       }
-      callback(reply)
+      callback(text2img(reply))
     })
   } else {
     callback('命令错误，请使用命令“帮助”来获取所有可用命令！')

@@ -9,7 +9,6 @@ interface botconf {
   ircintervalMin :number
   ircintervalMax :number
   maxloghistory :number
-  logfile :string
 }
 
 export const config :botconf = {
@@ -24,6 +23,5 @@ export const config :botconf = {
   ircpassword: "",
   ircintervalMin: 10,
   ircintervalMax: 3,
-  maxloghistory: 100,
-  logfile: './log.txt'  // 暂时还没有用
+  maxloghistory: 100
 }

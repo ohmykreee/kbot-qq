@@ -11,7 +11,7 @@
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "cwd": "${workspaceRoot}",
+      "cwd": "${workspaceRoot}/src",
       "runtimeArgs": ["-r", "ts-node/register"],
       "args": ["${workspaceRoot}/src/app.ts"]
     }

@@ -28,7 +28,7 @@ export function msgHandler(msg :string, callback: (reply :string) => void) :void
 `-----
 格式：
 Kreee，[命令]
-kreee [命令]
+kreee  [命令]
 -----
 支持：\n
 帮助/help/h：输出所有可用命令。\n

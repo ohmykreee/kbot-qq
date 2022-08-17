@@ -44,7 +44,7 @@ ping：康康机器人在没在摸鱼。 *\n
 二次元：来一张（给好孩子看的）二次元图片。\n
 动物/爆个照：本机器人的替身。\n
 舔狗：瞬间化身舔狗！\n
-推:[ID]：返回最新的一条推文（且用且珍惜）(alpha) 。 *\n
+推:[ID]/推图:[ID]：最新的一条推文（且用且珍惜）(alpha) 。 *\n
 谁最可爱：才不告诉你捏！
 -----
 （末尾标 * 号的项目需要完整的命令才能触发）
@@ -170,20 +170,37 @@ ping：康康机器人在没在摸鱼。 *\n
         log.error(error)
       })
 
-  } else if (/^推:/g.test(msg) || /^推：/g.test(msg)) {
-    const twitterId :string = msg.slice(2)
-    axios.get(`https://notabird.site/${twitterId}/rss`)
+  } else if (/^推[:：]/g.test(msg) || /^推图[:：]/g.test(msg)) {
+    let twitterId :string
+    let twitterUrl :string
+    // 判断是否仅请求图片推文
+    if (/^推图/g.test(msg)) {
+      twitterId = msg.slice(3)
+      twitterUrl = `https://notabird.site/${twitterId}/media/rss`
+    } else {
+      twitterId = msg.slice(2)
+      twitterUrl = `https://notabird.site/${twitterId}/rss`
+    }
+    axios.get(twitterUrl)
       .then(res => {
         const rssDoc = new JSDOM(res.data)
-        // 一个很奇葩的bug，需要再次声明一次，极其不稳定
-        const rssDoc2 = new JSDOM(res.data, {contentType: 'application/xml'})
         const item = rssDoc.window.document.querySelectorAll('item').item(0)
-        const user = rssDoc.window.document.querySelectorAll('title').item(0)
-        const pubDateGMT = rssDoc2.window.document.querySelectorAll('item').item(0).querySelector('pubDate')
-        // 处理时间，将 GMT 转换为当前时区
-        const pubDate = new Date(Date.parse(pubDateGMT?.innerHTML as string))
+        // 一个很奇葩的bug，需要再次声明一次，极其不稳定（被pubDate、RTuser使用）
+        const rssDoc2 = new JSDOM(res.data, {contentType: 'application/xml'})
+        const item2 = rssDoc2.window.document.querySelectorAll('item').item(0)
+        // 准备推文内容
+        let user :string = rssDoc.window.document.querySelectorAll('title').item(0).innerHTML
+        let content :string = item.querySelector('title')?.innerHTML as string
+        // 判断是否为转推，是则加上被转推的对象
+        if (/^RT by/g.test(content)) {
+          let RTuser :string = item2.querySelector('creator')?.innerHTML as string
+          content = `（转推自 ${RTuser}）\n` + content
+        }
+        // 处理时间，并将 GMT 转换为当前时区
+        const pubDateGMT :string = item2.querySelector('pubDate')?.innerHTML as string
+        const pubDate :string = new Date(Date.parse(pubDateGMT)).toLocaleString('zh-CN')
         // 组装文字主体（又被风控了捏，用 text2img）
-        reply = text2img(`${user?.innerHTML}\n-----\n${item.querySelector('title')?.innerHTML as string}\n-----\n（发布时间：${pubDate.toLocaleString('zh-CN')}）`)
+        reply = text2img(`${user}\n>>>>>\n\n${content}\n\n<<<<<\n（发布时间：${pubDate}）`)
         // 检测是否含图片（视频放弃检测）
         if (item.querySelector('description')?.innerHTML.match(/<img[^>]+src="([^">]+)"/gm)) {
           const imgs = item.querySelector('description')?.innerHTML.match(/<img[^>]+src="([^">]+)"/gm)
@@ -195,7 +212,7 @@ ping：康康机器人在没在摸鱼。 *\n
       })
       .catch(function (error) {
         if (error.response && error.response.status === 404) {
-          callback(`查无此人：@ ${twitterId}`)
+          callback(`未找到该账户：@ ${twitterId}`)
         } else {
           log.error(error)
         }

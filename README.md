@@ -27,8 +27,16 @@ npm run dev
 ```
 
 # FAQ
-1. Chinese fonts can't be loaded.   
-Please copy `src/fonts/` to `dist/src/fonts/`, then set working directory to `dist/src`.
+1. Chinese rendered incorrently in `text2img()`.   
+Please refer to this article: [Installing Asian Fonts on Ubuntu & Debian - AccuSoft](https://help.accusoft.com/PrizmDoc/v12.1/HTML/Installing_Asian_Fonts_on_Ubuntu_and_Debian.html)   
+For short, if you want to install these fonts:
+```
+sudo apt install language-pack-ja
+sudo apt install language-pack-zh
+sudo apt install language-pack-ko
+sudo apt install fonts-arphic-ukai fonts-arphic-uming fonts-ipafont-mincho fonts-ipafont-gothic fonts-unfonts-core
+
+```
 
 2. Emoji rendered incorrectly in `text2img()`.   
 For ubuntu user, please try: `sudo apt install ttf-ancient-fonts`   

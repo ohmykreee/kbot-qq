@@ -175,10 +175,11 @@ ping：康康机器人在没在摸鱼。 *\n
     axios.get(`https://notabird.site/${twitterId}/rss`)
       .then(res => {
         const rssDoc = new JSDOM(res.data)
+        // 一个很奇葩的bug，需要再次声明一次，极其不稳定
+        const rssDoc2 = new JSDOM(res.data, {contentType: 'application/xml'})
         const item = rssDoc.window.document.querySelectorAll('item').item(0)
         const user = rssDoc.window.document.querySelectorAll('title').item(0)
-        // 一个很奇葩的bug，需要再次声明一次，极其不稳定
-        const pubDateGMT = new JSDOM(res.data, {contentType: 'application/xml'}).window.document.querySelectorAll('item').item(0).querySelector('pubDate')
+        const pubDateGMT = rssDoc2.window.document.querySelectorAll('item').item(0).querySelector('pubDate')
         // 处理时间，将 GMT 转换为当前时区
         const pubDate = new Date(Date.parse(pubDateGMT?.innerHTML as string))
         // 组装文字主体（又被风控了捏，用 text2img）

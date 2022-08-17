@@ -1,10 +1,11 @@
 export const osuname :Array<{text: string}> = [
+  {"text": "Miyes"},
+  {"text": "YooLi"},
   {"text": "Kreee"},
   {"text": "happybigdio"},
   {"text": "He_ksy"},
   {"text": "RainStormsPEA"},
   {"text": "Mochinaga_Yuna"},
-  {"text": "YooLi"},
   {"text": "KCINE"},
   {"text": "kuuhaku9"},
   {"text": "bfdgbzfhs"},
@@ -15,4 +16,5 @@ export const osuname :Array<{text: string}> = [
   {"text": "Echo_XF"},
   {"text": "zhaishi"},
   {"text": "A179"},
+  {"text": "ILOVEUUZ"},
 ]

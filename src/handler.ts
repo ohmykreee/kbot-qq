@@ -1,6 +1,7 @@
 import axios from "axios"
 import { config } from "../botconfig"
 import { log } from "./logger"
+import { JSDOM } from "jsdom"
 import { cutie } from "./list/cutie"
 import { vw50 } from "./list/kfc-vw50"
 import { food } from "./list/food"
@@ -43,7 +44,7 @@ ping：康康机器人在没在摸鱼。 *\n
 二次元：来一张（给好孩子看的）二次元图片。\n
 动物/爆个照：本机器人的替身。\n
 舔狗：瞬间化身舔狗！\n
-sh(上交所)/sz(深交所)股票代码：如错误直接返回空图片。 *\n
+推:[ID]：返回最新的一条推文（且用且珍惜）(alpha) 。 *\n
 谁最可爱：才不告诉你捏！
 -----
 （末尾标 * 号的项目需要完整的命令才能触发）
@@ -169,10 +170,35 @@ sh(上交所)/sz(深交所)股票代码：如错误直接返回空图片。 *\n
         log.error(error)
       })
 
-  } else if (/sh/g.test(msg) || /sz/g.test(msg)) {
-    // 直接传递图片 url 给 go-cqhttp，使用新浪 api，若股票信息不正确将会输出空图片
-    reply = `[CQ:image,file=https://image.sinajs.cn/newchart/min/n/${msg}.gif]`
-    callback(reply)
+  } else if (/^推:/g.test(msg) || /^推：/g.test(msg)) {
+    const twitterId :string = msg.slice(2)
+    axios.get(`https://notabird.site/${twitterId}/rss`)
+      .then(res => {
+        const rssDoc = new JSDOM(res.data)
+        const item = rssDoc.window.document.querySelectorAll('item').item(0)
+        const user = rssDoc.window.document.querySelectorAll('title').item(0)
+        // 一个很奇葩的bug，需要再次声明一次，极其不稳定
+        const pubDateGMT = new JSDOM(res.data, {contentType: 'application/xml'}).window.document.querySelectorAll('item').item(0).querySelector('pubDate')
+        // 处理时间，将 GMT 转换为当前时区
+        const pubDate = new Date(Date.parse(pubDateGMT?.innerHTML as string))
+        // 组装文字主体（又被风控了捏，用 text2img）
+        reply = text2img(`${user?.innerHTML}\n-----\n${item.querySelector('title')?.innerHTML as string}\n-----\n（发布时间：${pubDate.toLocaleString('zh-CN')}）`)
+        // 检测是否含图片（视频放弃检测）
+        if (item.querySelector('description')?.innerHTML.match(/<img[^>]+src="([^">]+)"/gm)) {
+          const imgs = item.querySelector('description')?.innerHTML.match(/<img[^>]+src="([^">]+)"/gm)
+          for (const img of imgs!) {
+            reply = reply + `[CQ:image,file=${img.slice(10, -1)}]`
+          }
+        }
+        callback(reply)
+      })
+      .catch(function (error) {
+        if (error.response && error.response.status === 404) {
+          callback(`查无此人：@ ${twitterId}`)
+        } else {
+          log.error(error)
+        }
+      })
 
   } else if (/吃什么/g.test(msg)) {
     // 随机选取 list/food.ts 中的一项回复

@@ -13,7 +13,8 @@
       ],
       "cwd": "${workspaceRoot}/src",
       "runtimeArgs": ["-r", "ts-node/register"],
-      "args": ["${workspaceRoot}/src/app.ts"]
+      "args": ["${workspaceRoot}/src/app.ts"],
+      "envFile": "${workspaceFolder}/.env"
     }
   ]
 }

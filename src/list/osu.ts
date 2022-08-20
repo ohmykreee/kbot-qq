@@ -1,5 +1,4 @@
 export const osuname :Array<{text: string}> = [
-  {"text": "Miyes"},
   {"text": "YooLi"},
   {"text": "Kreee"},
   {"text": "happybigdio"},

@@ -116,7 +116,7 @@ ping：康康机器人在没在摸鱼。 *\n
     // 运行 irc.ts 中的 getOSUStats() 获取回复消息内容
     getOSUStats(function(replytext) {
       reply = replytext
-      callback(reply)
+      callback(text2img(reply))
     })
 
   } else if (/色色/g.test(msg) || /色图/g.test(msg)) {
@@ -205,7 +205,7 @@ ping：康康机器人在没在摸鱼。 *\n
         if (item.querySelector('description')?.innerHTML.match(/<img[^>]+src="([^">]+)"/gm)) {
           const imgs = item.querySelector('description')?.innerHTML.match(/<img[^>]+src="([^">]+)"/gm)
           for (const img of imgs!) {
-            reply = reply + `[CQ:image,file=${img.slice(10, -1)}]`
+            reply = reply + `\n[CQ:image,file=${img.slice(10, -1)}]`
           }
         }
         callback(reply)

@@ -1,4 +1,4 @@
-export const cutie :Array<{text: string}> = [
-  {"text": "我我我！"},
-  {"text": "是你哒！"},
+export const cutie :Array<string> = [
+  "我我我！",
+  "是你哒！",
 ]

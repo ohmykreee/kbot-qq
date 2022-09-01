@@ -175,7 +175,7 @@ async function askBancho() :Promise<void> {
     // 遍历查询
     for (const user of osuname) {
       await new Promise(f => setTimeout(f, 500)) // 每次间隔 500ms
-      client.send('BanchoBot', `STATS ${user.text}`)
+      client.send('BanchoBot', `STATS ${user}`)
     }
   } else {
     // 如果撞锁多次，则强制停止程序

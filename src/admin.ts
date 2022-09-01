@@ -42,7 +42,7 @@ stop/停止：无退出码停止程序，如果程序此前有异常则会被 da
     readLog(count, function(logs) {
       let reply :string = ''
       for (const context of logs) {
-        reply = `${reply}${context.text}\n`
+        reply = `${reply}${context}\n`
       }
       callback(text2img(reply))
     })

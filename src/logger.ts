@@ -3,7 +3,7 @@ import { config } from '../botconfig'
 import { adminNotify } from './app'
 
 // 用于存储以往的日志，以后改为文件读写操作
-const logHistory :Array<{text :string}> = []
+const logHistory :Array<string> = []
 
 /**
  * 封装日志格式化输出
@@ -123,7 +123,7 @@ function getDateString() :string {
  * 
  */
 function saveLog(logtext :string) :void {
-  logHistory.push({text: logtext})
+  logHistory.push(logtext)
   if (logHistory.length > config.maxloghistory) {
     logHistory.splice(0, logHistory.length - config.maxloghistory)
     log.debug('logHistory trim has been triggered.')
@@ -140,6 +140,6 @@ function saveLog(logtext :string) :void {
  * @param callback - 回调函数，返回值为一个包含指定数目日志的数组
  * 
  */
-export function readLog(count :number, callback:(logs :Array<{text :string}>) => void) :void {
+export function readLog(count :number, callback:(logs :Array<string>) => void) :void {
   callback(logHistory.slice(-count))
 }

@@ -95,7 +95,7 @@ ping：康康机器人在没在摸鱼。 *\n
     let replytext :string = ''
     // 遍历输出 list/osu.ts 中的内容
     for (const user of osuname) {
-      replytext = `${replytext}${user.text}\n`
+      replytext = `${replytext}${user}\n`
     }
     reply = replytext + `(共 ${osuname.length} 项)`
     callback(text2img(reply))
@@ -109,7 +109,7 @@ ping：康康机器人在没在摸鱼。 *\n
 
   } else if (/谁最可爱/g.test(msg)) {
     // 随机选取 list/cutie.ts 中的一项并回复
-    reply = cutie[Math.floor(Math.random() * cutie.length)].text
+    reply = cutie[Math.floor(Math.random() * cutie.length)]
     callback(reply)
 
   } else if (/在线/g.test(msg)) {
@@ -140,7 +140,7 @@ ping：康康机器人在没在摸鱼。 *\n
     let today :number = new Date().getDay()
     // 判断今天是否为星期四，如是则随机选取 list/kfc-vw50.ts 中的一项回复
     if (today === 4) {
-      reply = vw50[Math.floor(Math.random() * vw50.length)].text
+      reply = vw50[Math.floor(Math.random() * vw50.length)]
       callback(reply)
     } else {
       reply = '反正不是星期四'
@@ -220,7 +220,7 @@ ping：康康机器人在没在摸鱼。 *\n
 
   } else if (/吃什么/g.test(msg)) {
     // 随机选取 list/food.ts 中的一项回复
-    reply = food[Math.floor(Math.random() * food.length)].text
+    reply = food[Math.floor(Math.random() * food.length)]
     callback(reply)
 
   }

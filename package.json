@@ -4,7 +4,7 @@
   "description": "A Kreee's QQ bot written with TypeScript.",
   "main": "src/app.ts",
   "scripts": {
-    "dev": "npx ts-node app.ts",
+    "dev": "npx ts-node src/app.ts",
     "build": "npx tsc",
     "server": "npx tsc && npx nodemon dist/src/app.js"
   },

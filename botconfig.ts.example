@@ -8,6 +8,7 @@ interface botconf {
   gokapitoken: string
   ircintervalMin :number
   ircintervalMax :number
+  nitterurl :string
   maxloghistory :number
 }
 
@@ -23,5 +24,6 @@ export const config :botconf = {
   ircpassword: "",
   ircintervalMin: 10,
   ircintervalMax: 3,
+  nitterurl: "",
   maxloghistory: 100
 }

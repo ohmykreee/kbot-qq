@@ -176,10 +176,10 @@ ping：康康机器人在没在摸鱼。 *\n
     // 判断是否仅请求图片推文
     if (/^推图/g.test(msg)) {
       twitterId = msg.slice(3)
-      twitterUrl = `https://notabird.site/${twitterId}/media/rss`
+      twitterUrl = `${config.nitterurl}${twitterId}/media/rss`
     } else {
       twitterId = msg.slice(2)
-      twitterUrl = `https://notabird.site/${twitterId}/rss`
+      twitterUrl = `${config.nitterurl}${twitterId}/rss`
     }
     axios.get(twitterUrl)
       .then(res => {

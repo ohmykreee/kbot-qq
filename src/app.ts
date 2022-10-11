@@ -1,14 +1,13 @@
 import { config } from "../botconfig"
 import { WebSocket } from "ws"
 import { msgHandler } from "./handler"
-import { startIRC } from "./irc"
+import { startIRC } from "./online"
 import { adminHandler } from "./admin"
 import { log } from "./logger"
 
 // 用于定义用于存储传入消息的变量
 interface msg {
   raw_text :string,
-  text? :string,
   message_type :string,
   group_id? :number,
   user_id :number
@@ -31,6 +30,18 @@ interface msg_params {
   auto_escape? :boolean
 }
 
+// 用于定义部分功能的运行状态，并导出给全局
+interface appStatus {
+  isQuery :boolean,
+  isMP :boolean,
+  queryPaused :boolean
+}
+export const appStatus :appStatus = {
+  isQuery: false,
+  isMP: false,
+  queryPaused: false
+}
+
 // 初始化 WebSocket，并传入事件触发函数
 const client = new WebSocket(config.url + '?access_token=' + config.token)
 client.addEventListener('message', function (event) {
@@ -42,14 +53,14 @@ client.addEventListener('error', function(event) {
 client.addEventListener('close' ,function(event) {
   log.fatal(`connection closed: ${event.reason}`)
 })
-// 启动 irc.ts 中的 slate-irc 初始化
+// 启动 online.ts 中的 slate-irc 初始化
 startIRC()
 
 /**
  * 当接收到 go-cqhttp 任意内容时触发
  *
  * @remarks
- * 由 WebSocket 的 message 事件触发
+ * 由 WebSocket 的 message 事件触发，并传递含处理过的text的msg给 {@link fetchResponse()}
  *
  * @param data - 接收消息的 object，内容可参考{@link https://github.com/botuniverse/onebot-11/blob/master/event/message.md}
  * 
@@ -60,24 +71,27 @@ function ifNeedResponed(data :any) :void {
     const msg :msg = {
       raw_text: data.raw_message as string,
       message_type: data.message_type as string,
-      user_id: data.sender.user_id as number
+      user_id: data.sender.user_id as number,
+      group_id: data.message_type === 'group'? data.group_id as number:undefined
     }
-    // 判断前缀是否为 kreee/Kreee，如是则除去前6个字符
-    if (/^[Kk]reee/g.test(msg.raw_text)) {
-      msg.text = msg.raw_text.slice(6)
-      log.info(`[${msg.user_id}] ${msg.text}`)
-      // 判断是否为群消息，如是则传入群号至对应变量，判断完成传入处理后的内容至 fetchResponse()
-      if(msg.message_type === 'group') {
-        msg.group_id = data.group_id
-        fetchResponse(msg)
+    // 判断是否包含触发字符：/
+    if (msg.raw_text.slice(0, 1) === '/') {
+      const command :string = msg.raw_text.slice(1)
+      // 判断是否是来自私聊的管理员的命令
+      if (msg.message_type === 'private' && config.adminqq.includes(msg.user_id) && /^kbot/g.test(command)) {
+        fetchResponse(msg, command, "admin")
+        log.info(`[${msg.user_id}] [Admin] ${command}`)
+      // 判断是否来自群聊的mp命令
+      } else if (msg.message_type === 'group' && /^mp/g.test(command)) {
+        fetchResponse(msg, command, "mp")
+        log.info(`[${msg.user_id}] [mp] ${command}`)
+      // 普通的带/的命令
       } else {
-        fetchResponse(msg)
+        fetchResponse(msg, command, "main")
+        log.info(`[${msg.user_id}] ${command}`)
       }
-    // 判断前缀是否为 kbot/Kbot且来自管理员的私聊，如是则为管理员命令并除去前5个字符
-    } else if (/^[Kk]bot/g.test(msg.raw_text) && config.adminqq.includes(msg.user_id) && msg.message_type === 'private') {
-      msg.text = msg.raw_text.slice(5)
-      log.info(`[${msg.user_id}] [Admin] ${msg.text}`)
-      fetchResponse(msg, true)
+    } else {
+      fetchResponse(msg, msg.raw_text, "other")
     }
   } else {
     // 若判断为非消息，则传入 handleCallback 进行下一步处理
@@ -90,53 +104,55 @@ function ifNeedResponed(data :any) :void {
  * 获取回复内容
  *
  * @remarks
- * 将来自 {@link ifNeedResponed()} 接收的消息字符串传递给 {@link msgHandler()} （管理员消息会传递给 {@link adminHandler()} ）,经过简单处理后并构造回复所需要的 object，传递给 {@link makeResponse()}
+ * 将来自 {@link ifNeedResponed()} 接收的消息字符串传递给 {@link msgHandler()} （管理员消息会传递给 {@link adminHandler()}，mp消息会传给{@link mpHandler()} ）,经过简单处理后并构造回复所需要的 object，传递给 {@link makeResponse()}
  *
  * @param msg - 接收消息的 object
- * @param isAdmin - 消息是否来自管理员（可选）
+ * @param text - 经过 {@link ifNeedResponed()} 处理过的消息字符串
+ * @param type - 消息的类型，admin：管理员命令；mp：mp房间命令；main：包含触发字符/的命令；other：其他不包含触发字符/的命令
  * 
  */
-function fetchResponse(msg: msg, isAdmin? :boolean) :void {
-  // 是否为管理员的控制消息
-  if (isAdmin) {
-    // 执行来自 admin.ts 的 adminHandler()，并通过回调函数获取文字结果
-    adminHandler(msg.text as string, function (reply) {
-      const res :msg_response = {
-        message_type: 'private',
-        text: reply,
-        user_id: msg.user_id,
-      }
-      // 判断是否在开发模式，如是则在消息结尾加上 (Dev mode)
-      if (config.debug) {
-        res.text = res.text + `\n(Dev mode)`
-      }
-      // 传入消息至 makeResponse()，回复消息
-      makeResponse(res)
-    })
-  } else {
-    // 执行来自 handler.ts 的 msgHandler()，并通过回调函数获取文字结果
-    msgHandler(msg.text as string, function (reply) {
-      const res :msg_response = {
-        message_type: msg.message_type,
-        text: reply,
-        user_id: msg.user_id,
-      }
-      // 判断是否返回没有命中规则的默认回复，是则写入日志警告
-      if(res.text === '智商有点低，听不懂捏') {
-        log.warn(`mismatch text:${msg.raw_text}`)
-      }
-      // 判断是否为群消息，如是则在消息结尾加上at，并传入群号
-      if (res.message_type === 'group') {
-        res.group_id = msg.group_id,
-        res.text = res.text + `\n[CQ:at,qq=${res.user_id}]`
-      }
-      // 判断是否在开发模式，如是则在消息结尾加上 (Dev mode)
-      if (config.debug) {
-        res.text = res.text + `\n(Dev mode)`
-      }
-      // 传入消息至 makeResponse()，回复消息
-      makeResponse(res)
-    })
+function fetchResponse(msg: msg, text :string, type :'admin' | 'mp' | 'main' | 'other') :void {
+  const textArray: Array<string> = text.split(" ")
+
+  // 封装一个方法，用于一些重复的操作
+  const msgModify = (text :string) => {
+    // 构建回复用主体
+    const res :msg_response = {
+      message_type: msg.message_type,
+      text: text,
+      user_id: msg.user_id,
+      group_id: msg.message_type === "group"? msg.group_id:undefined
+    }
+    // 判断是否为群消息，如是则在消息结尾加上at
+    if (res.message_type === "group") {
+      res.text = res.text + `\n[CQ:at,qq=${res.user_id}]`
+    }
+    // 判断是否在开发模式，如是则在消息结尾加上 (Dev mode)
+    if (config.debug) {
+      res.text = res.text + "\n(Dev mode)"
+    }
+    // 传入消息至 makeResponse()，回复消息
+    makeResponse(res)
+  }
+
+  // 判断消息的类型
+  switch (type) {
+    case "admin":
+      adminHandler(textArray, function(reply) {
+        msgModify(reply)
+      })
+      break
+    case "mp":
+      // 这里走mp用的，方法名为 mpHandler()
+      break
+    case "main":
+      msgHandler(textArray, function(reply) {
+        msgModify(reply)
+      })
+      break
+    case "other":
+      // 走一些命令前不带 / 的特殊字符
+      //ToDo 可能做早安&晚安&打胶统计器，即距离上一次早安&晚安&打胶距离了多长时间，可能要用持续化数据库
   }
 }
 
@@ -153,13 +169,11 @@ function makeResponse(res :msg_response) :void {
   const msg_params :msg_params = {
     message: res.text,
     user_id: res.user_id,
-    message_type: res.message_type
+    message_type: res.message_type,
+    group_id: res.message_type === "group"? res.group_id:undefined
   }
-  // 判断是否为群消息，如是则传入群号
-  if (res.message_type === 'group') {
-    msg_params.group_id = res.group_id
   // 如果 message_type 不是 group 或是 private，则输出错误并终止程序
-  } else if (res.message_type !== 'group' && res.message_type !== 'private') {
+  if (res.message_type !== 'group' && res.message_type !== 'private') {
   log.fatal(`makeResponse: message_type is out of range: ${res.message_type}`)
   }
   // 构建发送给 go-cqhttp 的消息主体
@@ -191,7 +205,7 @@ function handleCallback(data :any) :void {
     adminNotify(`${data.sub_type} user_id=${data.self_id}`)
   // 判断是否为心跳事件
   } else if (data.post_type == 'meta_event' && data.meta_event_type == 'heartbeat') {
-    log.info(`heartbeat interval=${data.interval}`)
+    log.debug(`heartbeat interval=${data.interval}`)
   // 无法判断时直接输出至日志
   } else {
     log.warn(`unhandled: ${JSON.stringify(data)}`)

@@ -1,6 +1,6 @@
 {
   "name": "kbot-qq",
-  "version": "1.4.1",
+  "version": "2.0.0",
   "description": "A Kreee's QQ bot written with TypeScript.",
   "main": "src/app.ts",
   "scripts": {

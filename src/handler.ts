@@ -71,7 +71,7 @@ export function msgHandler(msg :Array<string>, callback: (reply :string) => void
           break
 
         case "更新":
-          // 运行 irc.ts 中的 updateOSUStats() 以更新在线列表
+          // 运行 online.ts 中的 updateOSUStats() 以更新在线列表
           updateOSUStats(function(replytext) {
             reply = replytext
             callback(reply)
@@ -79,7 +79,7 @@ export function msgHandler(msg :Array<string>, callback: (reply :string) => void
           break
 
         default:
-          // 运行 irc.ts 中的 getOSUStats() 获取回复消息内容
+          // 运行 online.ts 中的 getOSUStats() 获取回复消息内容
           getOSUStats(function(replytext) {
             reply = replytext
             callback(text2img(reply))

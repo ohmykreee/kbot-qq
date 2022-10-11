@@ -46,13 +46,25 @@ export function startIRC() :void {
       fetchMsg(msg.message)
     }
   })
-  // 开始程序运行时第一次查询
+  // 开始第一次查询
   askBancho()
   // 开始程序运行时第一次 timeout 随机值选取
   timeout = Math.floor(Math.random() * (config.ircintervalMax - config.ircintervalMin + 1) + config.ircintervalMin)
-  // 开始运行定时查询
-  queryTimer()
+  // 若是程序第一次运行，开始运行定时查询
+    queryTimer()
 }
+
+/**
+ * 停止 slate-irc
+ *
+ * @remarks
+ * 登出 osu-irc，并暂停
+ * 
+ */
+export function stopIRC () :void{
+  client.quit("")
+}
+
 
 /**
  * 定时查询
@@ -84,7 +96,7 @@ export function getOSUStats(callback: (reply :string) => void) :void {
     callback(statsResult)
   } else {
     log.error('getOSUStats: statsResult is empty')
-    callback('获取在线列表失败，请尝试执行命令：“更新在线列表”！')
+    callback('获取在线列表失败，请尝试执行命令：“/在线 更新”！')
   }
 }
 
@@ -99,11 +111,11 @@ export function getOSUStats(callback: (reply :string) => void) :void {
  */
 export function updateOSUStats(callback: (reply :string) => void) :void {
   // 判断 BanchoBot 的查询是否正在进行（锁是否被锁上）
-  if (!appStatus.isQuery) {
+  if (!appStatus.isQuery && !appStatus.queryPaused) {
     callback('请求成功，正在更新在线列表...')
     askBancho()
   } else {
-    callback('正在执行定时更新，请稍后查询...')
+    callback('查询正忙或查询已暂停，请稍后查询...')
   }
 }
 
@@ -163,7 +175,7 @@ function fetchMsg(msg :string) :void {
  */
 async function askBancho() :Promise<void> {
   // 判断是否有锁
-  if (!appStatus.isQuery) {
+  if (!appStatus.isQuery && !appStatus.queryPaused) {
     // 输出开始查询的日志
     log.debug('askBancho: start querying')
     // 上锁
@@ -176,7 +188,7 @@ async function askBancho() :Promise<void> {
       await new Promise(f => setTimeout(f, 500)) // 每次间隔 500ms
       client.send('BanchoBot', `STATS ${user}`)
     }
-  } else {
+  } else if (!appStatus.isQuery) {
     // 如果撞锁多次，则强制停止程序
     if (isBusyCounter > 2) {
       log.fatal('askBancho: cannot start because isBusy = true, exit.')

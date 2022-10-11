@@ -34,13 +34,11 @@ interface msg_params {
 // 用于定义部分功能的运行状态，并导出给全局
 interface appStatus {
   isQuery :boolean,
-  isMP :boolean,
-  queryPaused :boolean
+  isMP :boolean
 }
 export const appStatus :appStatus = {
   isQuery: false,
-  isMP: false,
-  queryPaused: false
+  isMP: false
 }
 
 // 初始化 WebSocket，并传入事件触发函数

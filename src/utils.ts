@@ -1,4 +1,7 @@
+import { config } from "../botconfig"
+import { log } from "./logger"
 import { createCanvas } from "canvas"
+import axios from "axios"
 
 /**
  * 文字转图片
@@ -29,4 +32,28 @@ export function text2img(text :string) :string {
   ctx.fillStyle = "black"
   ctx.fillText(text, 5, textImg.actualBoundingBoxAscent + 5)
   return `[CQ:image,file=base64://${canvas.toDataURL().slice(22)}]`
+}
+
+/**
+ * 获取 osu!api token
+ *
+ * @remarks
+ * 文档 {@link https://osu.ppy.sh/docs/index.html#client-credentials-grant}，适用范围仅为 public
+ *
+ * @param callback - 回调函数，返回值为字符串
+ * 
+ */
+export function getOsuToken(callback: (reply :string) => void) :void {
+  axios.post("https://osu.ppy.sh/oauth/token", {
+    client_id: config.osuclientid,
+    client_secret: config.osuclientsecret,
+    grant_type: "client_credentials",
+    scope: "public"
+  })
+    .then(res => {
+      callback(res.data.access_token)
+    })
+    .catch(function (error) {
+      log.error(error)
+    })
 }

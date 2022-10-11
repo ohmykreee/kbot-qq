@@ -8,7 +8,7 @@ import { osuname } from "./list/osu"
 import { version } from '../package.json'
 import { getOSUStats } from "./online"
 import { updateOSUStats } from "./online"
-import { text2img } from "./utils"
+import { text2img, getOsuToken } from "./utils"
 
 /**
  * 处理消息并返回回复消息字符串
@@ -38,11 +38,12 @@ export function msgHandler(msg :Array<string>, callback: (reply :string) => void
 /在线 更新          立即请求一次 osu! 在线列表的更新\n
 /吃什么             不知道今天中午/晚上吃什么？问我！\n
 /星期四             星期四？想什么呢！\n
+/抽一张             从盲盒里抽一张，0.05% / 4000井有神秘奖励？\n
 /推 [推特ID]        返回最新的一条推文（且用且珍惜）(alpha)\n
 /推图 [推特ID]      返回最新的一条带图片推文（且用且珍惜）(alpha)\n
 /re [osu!用户名]    猫猫机器人崩了用这个备用（只能返回简单数据）\n
 /pr [osu!用户名]    猫猫机器人崩了用这个备用（只能返回简单数据）\n
-/mp [命令]          关于自动建房功能，建议使用"/mp help" 了解更多(alpha)\n
+/mp [命令]          自动建房功能，建议先使用"/mp help" 了解更多(alpha)\n
 `
       callback(text2img(reply))
       break
@@ -106,15 +107,12 @@ export function msgHandler(msg :Array<string>, callback: (reply :string) => void
 
     case "推":
     case "推图":
-      let twitterId :string
-      let twitterUrl :string
-      // 判断是否仅请求图片推文
-      if (msg[0] === "推图") {
-        twitterId = msg[1]
-        twitterUrl = `${config.nitterurl}${twitterId}/media/rss`
-      } else {
-        twitterId = msg[1]
-        twitterUrl = `${config.nitterurl}${twitterId}/rss`
+      let twitterId :string = msg.slice(1).join(" ")
+      let twitterUrl :string = msg[0] === "推图"? `${config.nitterurl}${twitterId}/media/rss`:`${config.nitterurl}${twitterId}/rss`
+      // 判断推特ID是否存在
+      if (!twitterId) {
+        callback("请输入有效的ID！")
+        return
       }
       axios.get(twitterUrl)
         .then(res => {
@@ -154,13 +152,83 @@ export function msgHandler(msg :Array<string>, callback: (reply :string) => void
         })
         break
 
+    case "抽一张":
+        axios.get("https://iw233.cn/API/Random.php")
+          .then(res => {
+            callback(`[CQ:image,file=${res.request.protocol}//${res.request.host}${res.request.path}]`)
+          })
+          .catch(function (error) {
+            log.error(error)
+          })
+        break
+
     case "re":
     case "pr":
-        callback("仍在开发中...")
+        // 获取token
+          getOsuToken(function(token) {
+            // 获取用户id，以及替换两个奇葩字符 []
+            let user :string = msg.slice(1).join(" ")
+            user = user.replace(/&#91;/i, '[');
+            user = user.replace(/&#93;/i, ']');
+            // 判断是否存在用户名
+            if (!user) {
+              callback('请输入有效的用户名！')
+              return
+            }
+            axios.get(`https://osu.ppy.sh/api/v2/users/${user}`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            })
+            .then(res => {
+              const userid = res.data.id
+              // 获取用户最近游玩
+              const includeFailed :number = msg[0] === "re"? 1:0
+              axios.get(`https://osu.ppy.sh/api/v2/users/${userid}/scores/recent?include_fails=${includeFailed}&limit=1`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              })
+              .then (res => {
+                if (!(res.data.length === 0)) {
+                  const recent = res.data[0]
+                  let reply :string = 
+`
+${recent.user.username} (mode: ${recent.mode})
+\n----------\n
+铺面信息：
+    ${recent.beatmapset.title} [${recent.beatmap.status}]
+    ${recent.beatmap.version} (${recent.beatmap.difficulty_rating}*)
+    (地址：${recent.beatmap.url})
+\n----------\n
+表现信息：
+    得分：${recent.score}
+    准度：${Math.floor(recent.accuracy * 100000) / 1000}% (Rank: ${recent.rank})
+    pp: ${recent.pp? recent.pp:"未 Ranked 或非最佳成绩"}
+    Combo: ${recent.max_combo}
+    ${recent.mods.length > 0? `mods：${recent.mods.toString()}`:""}
+`
+                  callback(text2img(reply))
+                } else {
+                  callback(`${user} 最近还没有打过图哦...`)
+                }
+              })
+              .catch(function (error) {
+                log.error(error)
+              })
+            })
+            .catch(function (error) {
+              if (error.response && error.response.status === 404) {
+                callback(`未找到该账户：${user}`)
+              } else {
+                log.error(error)
+              }
+            })
+          })
       break
 
     case "mp":
-        callback("仍在开发中...")
+        callback("请在群中使用该功能！")
       break
 
     default: callback(reply)

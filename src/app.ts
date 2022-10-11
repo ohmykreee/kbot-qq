@@ -112,10 +112,10 @@ function ifNeedResponed(data :any) :void {
  * 
  */
 function fetchResponse(msg: msg, text :string, type :'admin' | 'mp' | 'main' | 'other') :void {
-  const textArray: Array<string> = text.split(" ")
+  const textArray: Array<string> = text.split(" ").filter(n => n.length > 0)
 
   // 封装一个方法，用于一些重复的操作
-  const msgModify = (text :string) => {
+  const msgReply = (text :string) => {
     // 构建回复用主体
     const res :msg_response = {
       message_type: msg.message_type,
@@ -139,20 +139,27 @@ function fetchResponse(msg: msg, text :string, type :'admin' | 'mp' | 'main' | '
   switch (type) {
     case "admin":
       adminHandler(textArray, function(reply) {
-        msgModify(reply)
+        msgReply(reply)
       })
       break
     case "mp":
-      // 这里走mp用的，方法名为 mpHandler()
+      // 这里走mp用的，方法名为 mpHandler()，文件名为 mp.ts
+      msgReply("开发中，敬请期待...")
       break
     case "main":
       msgHandler(textArray, function(reply) {
-        msgModify(reply)
+        msgReply(reply)
       })
       break
     case "other":
       // 走一些命令前不带 / 的特殊字符
+      // 比如 “确认” “取消”  等被动命令（广播式传给所有需要该命令的功能）
       //ToDo 可能做早安&晚安&打胶统计器，即距离上一次早安&晚安&打胶距离了多长时间，可能要用持续化数据库
+      
+      //处理一下旧版本的命令
+      if (/^[Kk]reee[ ,，]/g.test(text)) {
+        msgReply("检测到旧版本的命令格式，请使用 “/help” 获取最新命令格式！")
+      }
   }
 }
 
@@ -224,7 +231,7 @@ function handleCallback(data :any) :void {
 export function adminNotify(msg :string) :void {
   for (const QQid of config.adminqq) {
     const msg_params :msg_params = {
-      message: `${msg}\n(for Admin)`,
+      message: `${msg}\n(for Admin) ${config.debug? "(Dev mode)":""}`,
       user_id: QQid,
       message_type: "private"
     }

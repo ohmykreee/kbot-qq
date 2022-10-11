@@ -10,6 +10,8 @@ interface botconf {
   ircintervalMax :number
   nitterurl :string
   maxloghistory :number
+  osuclientid :number
+  osuclientsecret :string
 }
 
 export const config :botconf = {
@@ -25,5 +27,7 @@ export const config :botconf = {
   ircintervalMin: 10,
   ircintervalMax: 3,
   nitterurl: "",
-  maxloghistory: 100
+  maxloghistory: 100,
+  osuclientid: ,
+  osuclientsecret: "",
 }

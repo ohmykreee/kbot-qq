@@ -1,8 +1,9 @@
 import { config } from "../botconfig"
 import { WebSocket } from "ws"
 import { msgHandler } from "./handler"
-import { startIRC } from "./online"
 import { adminHandler } from "./admin"
+import { mpHandler } from "./mp"
+import { startIRC } from "./online"
 import { log } from "./logger"
 
 // 用于定义用于存储传入消息的变量
@@ -143,8 +144,9 @@ function fetchResponse(msg: msg, text :string, type :'admin' | 'mp' | 'main' | '
       })
       break
     case "mp":
-      // 这里走mp用的，方法名为 mpHandler()，文件名为 mp.ts
-      msgReply("开发中，敬请期待...")
+      mpHandler(textArray, function(reply) {
+        msgReply(reply)
+      })
       break
     case "main":
       msgHandler(textArray, function(reply) {

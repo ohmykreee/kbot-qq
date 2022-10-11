@@ -1,5 +1,6 @@
 import IRC from "slate-irc"
 import net from "net"
+import { appStatus } from "./app"
 import { log } from "./logger"
 import { config } from "../botconfig"
 import { osuname } from "./list/osu"
@@ -15,8 +16,6 @@ const stats :stats = {
 }
 // 用于存储查询结果，当 handler.ts 请求查询时返回该值
 let statsResult :string = ''
-// 锁，避免一次性向 BanchoBot 提交多次查询
-let isBusy :boolean = false
 // 撞锁计数，如果多次撞锁则强制终止程序，等待 daemon 重启程序
 let isBusyCounter :number = 0
 // 用于定时查询间隔（分钟），为一一定范围内的随机整数值
@@ -100,7 +99,7 @@ export function getOSUStats(callback: (reply :string) => void) :void {
  */
 export function updateOSUStats(callback: (reply :string) => void) :void {
   // 判断 BanchoBot 的查询是否正在进行（锁是否被锁上）
-  if (!isBusy) {
+  if (!appStatus.isQuery) {
     callback('请求成功，正在更新在线列表...')
     askBancho()
   } else {
@@ -150,7 +149,7 @@ function fetchMsg(msg :string) :void {
     stats.count = 0
     stats.reply = ''
     // 解锁,清空撞锁计数
-    isBusy = false
+    appStatus.isQuery = false
     isBusyCounter = 0
   }
 }
@@ -164,11 +163,11 @@ function fetchMsg(msg :string) :void {
  */
 async function askBancho() :Promise<void> {
   // 判断是否有锁
-  if (!isBusy) {
+  if (!appStatus.isQuery) {
     // 输出开始查询的日志
     log.debug('askBancho: start querying')
     // 上锁
-    isBusy = true
+    appStatus.isQuery = true
     // 清空临时查询变量内内容
     stats.count = 0
     stats.reply = ''

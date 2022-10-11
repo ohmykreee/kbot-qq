@@ -17,7 +17,7 @@ export const config :botconf = {
   token: "",
   debug: false,
   adminqq: [1234567890,0987654321],
-  description: "早期阶段：仅支持简单的关键词匹配和固定回复。",
+  description: "实用化，固定的命令与简单的触发关键字符。",
   gokapiurl: "",
   gokapitoken: "",
   ircusername: "",

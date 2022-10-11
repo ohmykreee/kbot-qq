@@ -90,7 +90,6 @@ function startOsuAhr() :void {
       const status :string =
 `
 是否正在多人游戏：${appStatus.isMP? "是":"否"}
-在线列表查询是否暂停：${appStatus.queryPaused? "是":"否"}
 ${roomName? `房间名：${roomName}`:""}
 `
       callback(text2img(status))
@@ -103,14 +102,13 @@ ${roomName? `房间名：${roomName}`:""}
           callback('请输入有效的房间名称！')
           return
         }
-        appStatus.queryPaused = true
+        appStatus.isMP = true
         stopIRC()
         roomName = room
         callback(text2img(`注意：主持多人游戏期间查询在线功能将暂停！\n5s 后开始创建房间：${room}`))
         startOsuAhr()
         setTimeout(() => {
           osuahr.send(`make ${room}`)
-          appStatus.isMP = true
         }, 5000)
       } else {
         callback(`创建失败：正在进行多人游戏，房间名：${roomName}`)

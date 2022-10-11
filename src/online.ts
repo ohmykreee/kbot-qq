@@ -111,7 +111,7 @@ export function getOSUStats(callback: (reply :string) => void) :void {
  */
 export function updateOSUStats(callback: (reply :string) => void) :void {
   // 判断 BanchoBot 的查询是否正在进行（锁是否被锁上）
-  if (!appStatus.isQuery && !appStatus.queryPaused) {
+  if (!appStatus.isQuery && !appStatus.isMP) {
     callback('请求成功，正在更新在线列表...')
     askBancho()
   } else {
@@ -175,7 +175,7 @@ function fetchMsg(msg :string) :void {
  */
 async function askBancho() :Promise<void> {
   // 判断是否有锁
-  if (!appStatus.isQuery && !appStatus.queryPaused) {
+  if (!appStatus.isQuery && !appStatus.isMP) {
     // 输出开始查询的日志
     log.debug('askBancho: start querying')
     // 上锁
@@ -188,13 +188,13 @@ async function askBancho() :Promise<void> {
       await new Promise(f => setTimeout(f, 500)) // 每次间隔 500ms
       client.send('BanchoBot', `STATS ${user}`)
     }
-  } else if (!appStatus.isQuery) {
+  } else if (appStatus.isQuery) {
     // 如果撞锁多次，则强制停止程序
     if (isBusyCounter > 2) {
-      log.fatal('askBancho: cannot start because isBusy = true, exit.')
+      log.fatal('askBancho: cannot start because isQuery = true, exit.')
     } else {
       isBusyCounter = isBusyCounter + 1
-      log.warn(`askBancho: cannot start because isBusy = true, counter ${isBusyCounter}`)
+      log.warn(`askBancho: cannot start because isQuery = true, counter ${isBusyCounter}`)
     }
   }
 }

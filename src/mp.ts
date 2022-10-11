@@ -1,8 +1,9 @@
 import child_process from 'child_process'
 import { appStatus } from "./app"
 import { text2img } from "./utils"
-import { startIRC,stopIRC } from "./online"
+import { stopIRC } from "./online"
 import { exit } from 'process'
+import { config } from "../botconfig"
 
 // 存储房间名称
 let roomName :string
@@ -18,7 +19,7 @@ let osuahr :any
  */
 function startOsuAhr() :void {
   osuahr = {
-    terminal: child_process.spawn(process.execPath, ['./dist/cli/index.js'], { cwd: "./osuahr" }),
+    terminal: child_process.spawn(process.execPath, ['./dist/cli/index.js'], { cwd: config.ahrcwd }),
     send: (data: string) => {
       osuahr.terminal.stdin.write(data + '\n')
     }

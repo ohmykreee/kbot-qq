@@ -12,6 +12,7 @@ interface botconf {
   maxloghistory :number
   osuclientid :number
   osuclientsecret :string
+  ahrcwd :string
 }
 
 export const config :botconf = {
@@ -30,4 +31,5 @@ export const config :botconf = {
   maxloghistory: 100,
   osuclientid: ,
   osuclientsecret: "",
+  ahrcwd: ""
 }

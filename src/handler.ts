@@ -196,7 +196,7 @@ export function msgHandler(msg :Array<string>, callback: (reply :string) => void
 `
 ${recent.user.username} (mode: ${recent.mode})
 \n----------\n
-铺面信息：
+谱面信息：
     ${recent.beatmapset.title} [${recent.beatmap.status}]
     ${recent.beatmap.version} (${recent.beatmap.difficulty_rating}*)
     (地址：${recent.beatmap.url})
@@ -205,7 +205,7 @@ ${recent.user.username} (mode: ${recent.mode})
     得分：${recent.score}
     准度：${Math.floor(recent.accuracy * 100000) / 1000}% (Rank: ${recent.rank})
     pp: ${recent.pp? recent.pp:"未 Ranked 或非最佳成绩"}
-    Combo: ${recent.max_combo}
+    Combos: ${recent.max_combo}
     ${recent.mods.length > 0? `mods：${recent.mods.toString()}`:""}
 `
                   callback(text2img(reply))

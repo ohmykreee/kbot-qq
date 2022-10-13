@@ -214,21 +214,21 @@ ${recent.user.username} (mode: ${recent.mode})
                 }
               })
               .catch(function (error) {
-                log.error(error)
+                log.error(`osu-score: when get user-score: ${error.toString()}`)
               })
             })
             .catch(function (error) {
               if (error.response && error.response.status === 404) {
-                callback(`未找到该账户：${user}`)
+                callback(text2img(`未找到该账户：${user}`))
               } else {
-                log.error(error)
+                log.error(`osu-score: when get user-id: ${error.toString()}`)
               }
             })
           })
       break
 
     case "mp":
-        callback("请在群中使用该功能！")
+        callback("请在群聊中使用该功能！")
       break
 
     default: callback(reply)

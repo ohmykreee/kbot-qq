@@ -21,12 +21,8 @@ let isBusyCounter :number = 0
 // 用于定时查询间隔（分钟），为一一定范围内的随机整数值
 let timeout :number
 
-// 传入 url port 信息给 irc 客户端
-const stream  = net.connect({
-  port: 6667,
-  host: 'irc.ppy.sh'
-})
-const client = IRC(stream)
+// 创建一个容器用于装载 IRC 客户端实例
+let client :IRC.Client
 
 /**
  * 初始化 slate-irc
@@ -36,6 +32,12 @@ const client = IRC(stream)
  * 
  */
 export function startIRC() :void {
+  // 构建 IRC 客户端
+  const stream  = net.connect({
+    port: 6667,
+    host: 'irc.ppy.sh'
+  })
+  client = IRC(stream)
   // 传入登录所用信息
   client.user(config.ircusername, config.ircusername)
   client.pass(config.ircpassword)
@@ -63,6 +65,8 @@ export function startIRC() :void {
  */
 export function stopIRC () :void{
   client.quit("")
+  appStatus.isQuery = false
+  log.info("getOSUStats: disconnect IRC")
 }
 
 

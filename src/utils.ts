@@ -54,6 +54,6 @@ export function getOsuToken(callback: (reply :string) => void) :void {
       callback(res.data.access_token)
     })
     .catch(function (error) {
-      log.error(error)
+      log.error(`osu-get-token: ${error.toString()}`)
     })
 }

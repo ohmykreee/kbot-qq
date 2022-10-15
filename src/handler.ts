@@ -43,7 +43,7 @@ export function msgHandler(msg :Array<string>, callback: (reply :string) => void
 /推图 [推特ID]      返回最新的一条带图片推文（且用且珍惜）(alpha)\n
 /re [osu!用户名]    猫猫机器人崩了用这个备用（只能返回简单数据）\n
 /pr [osu!用户名]    猫猫机器人崩了用这个备用（只能返回简单数据）\n
-/mp [命令]          自动建房功能，建议先使用"/mp help" 了解更多(alpha)\n
+/mp [命令]          自动房主的多人房间，建议先使用"/mp help" 了解更多(alpha)\n
 `
       callback(text2img(reply))
       break

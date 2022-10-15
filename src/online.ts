@@ -97,7 +97,7 @@ function queryTimer() :void {
 export function getOSUStats(callback: (reply :string) => void) :void {
   // 判断 statsResult 是否为空，一般为程序首次运行时过早提交查询请求
   if (statsResult !== '') {
-    callback(statsResult)
+    callback(`${statsResult}${appStatus.isMP? "\n（注意：因正在主持多人游戏，查询已暂停）":""}`)
   } else {
     log.error('getOSUStats: statsResult is empty')
     callback('获取在线列表失败，请尝试执行命令：“/在线 更新”！')
@@ -119,7 +119,7 @@ export function updateOSUStats(callback: (reply :string) => void) :void {
     callback('请求成功，正在更新在线列表...')
     askBancho()
   } else {
-    callback('查询正忙或查询已暂停，请稍后查询...')
+    callback(`${appStatus.isMP? "查询已暂停":"查询正忙"}，请稍后查询...`)
   }
 }
 

@@ -149,7 +149,7 @@ function fetchResponse(msg: msg, text :string, type :'admin' | 'mp' | 'main' | '
     case "main":
       msgHandler(textArray, function(reply) {
         msgReply(reply)
-      })
+      }, msg.user_id)
       break
     case "other":
       // 走一些命令前不带 / 的特殊字符

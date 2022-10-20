@@ -18,9 +18,10 @@ import { text2img, getOsuToken } from "./utils"
  *
  * @param msg - 接收消息的字符数组
  * @param callback - 回调函数，返回值为字符串
+ * @param qqid - 触发者的 QQ 号，起因是为了某位群主量身定制
  * 
  */
-export function msgHandler(msg :Array<string>, callback: (reply :string) => void) :void {
+export function msgHandler(msg :Array<string>, callback: (reply :string) => void, qqid :number) :void {
   // 定义用于存储回复消息字符的变量，并赋予“没有命中规则的默认回复”值
   let reply :string = '智商有点低，听不懂捏（使用 /help 获取命令列表）'
   switch (msg[0]) {
@@ -97,7 +98,12 @@ export function msgHandler(msg :Array<string>, callback: (reply :string) => void
       let today :number = new Date().getDay()
       // 判断今天是否为星期四，如是则随机选取 list/kfc-vw50.ts 中的一项回复
       if (today === 4) {
-        reply = vw50[Math.floor(Math.random() * vw50.length)]
+        // 一个彩蛋，如果是 4133chen 的话只回复 “v我50”
+        if (qqid === 2428813374) {
+          reply = "v我50"
+        } else {
+          reply = vw50[Math.floor(Math.random() * vw50.length)]
+        }
         callback(reply)
       } else {
         reply = '反正不是星期四'

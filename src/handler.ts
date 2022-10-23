@@ -17,11 +17,11 @@ import { text2img, getOsuToken } from "./utils"
  * 接受接收的消息的字符串，当该消息命中某种规则时，返回回复消息字符串
  *
  * @param msg - 接收消息的字符数组
- * @param callback - 回调函数，返回值为字符串
  * @param qqid - 触发者的 QQ 号，起因是为了某位群主量身定制
+ * @param callback - 回调函数，返回值为字符串
  * 
  */
-export function msgHandler(msg :Array<string>, callback: (reply :string) => void, qqid :number) :void {
+export function msgHandler(msg :Array<string>, qqid :number, callback: (reply :string) => void) :void {
   // 定义用于存储回复消息字符的变量，并赋予“没有命中规则的默认回复”值
   let reply :string = '智商有点低，听不懂捏（使用 /help 获取命令列表）'
   switch (msg[0]) {

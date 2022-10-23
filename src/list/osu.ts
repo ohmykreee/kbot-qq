@@ -16,5 +16,6 @@ export const osuname :Array<string> = [
   "zhaishi",
   "A179",
   "ILOVEUUZ",
-  "[SG]ClockSeals"
+  "[SG]ClockSeals",
+  "[GB]ChickenGold"
 ]

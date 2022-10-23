@@ -68,7 +68,7 @@ function ifNeedResponed(data :any) :void {
   // 判断是否为消息
   if (data.raw_message) {
     const msg :msg = {
-      raw_text: data.raw_message as string,
+      raw_text: data.raw_message as string,  //TODO: 当 cqhttp 的上报类型改为 array 后，message 字段会有更丰富的信息，后期可以考虑利用
       message_type: data.message_type as string,
       user_id: data.sender.user_id as number,
       group_id: data.message_type === 'group'? data.group_id as number:undefined
@@ -147,14 +147,14 @@ function fetchResponse(msg: msg, text :string, type :'admin' | 'mp' | 'main' | '
       })
       break
     case "main":
-      msgHandler(textArray, function(reply) {
+      msgHandler(textArray, msg.user_id, function(reply) {
         msgReply(reply)
-      }, msg.user_id)
+      })
       break
     case "other":
       // 走一些命令前不带 / 的特殊字符
       // 比如 “确认” “取消”  等被动命令（广播式传给所有需要该命令的功能）
-      //ToDo 可能做早安&晚安&打胶统计器，即距离上一次早安&晚安&打胶距离了多长时间，可能要用持续化数据库
+      //TODO: 可能做早安&晚安&打胶统计器，即距离上一次早安&晚安&打胶距离了多长时间，可能要用持续化数据库
       
       //处理一下旧版本的命令
       if (/^[Kk]reee[ ,，]/g.test(text)) {

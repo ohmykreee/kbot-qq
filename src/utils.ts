@@ -2,6 +2,7 @@ import { config } from "../botconfig"
 import { log } from "./logger"
 import { createCanvas } from "canvas"
 import axios from "axios"
+import FormData from "form-data"
 
 /**
  * 文字转图片
@@ -56,4 +57,51 @@ export function getOsuToken(callback: (reply :string) => void) :void {
     .catch(function (error) {
       log.error(`osu-get-token: ${error.toString()}`)
     })
+}
+
+/**
+ * 上传文件至 Gokapi 实例
+ *
+ * @remarks
+ * Gokapi 项目地址及Api文档 {@link https://github.com/Forceu/Gokapi}
+ *
+ * @param file - 需要上传的文件，类型为 ArrayBuffer
+ * @param filename - 需要上传文件的文件名
+ * @param expiryDays - 过期天数（0 为无限制）
+ * @param allowedDownloads - 允许下载次数（0 为无限制）
+ * @param callback - 回调函数，返回值为 {@link gokapiReturn}
+ * @param password - 访问密码（可选）
+ * 
+ */
+export function uploadToGokapi(file :ArrayBuffer, filename :string, expiryDays :number, allowedDownloads :number, callback: (reply :gokapiReply) => void, password? :string) :void {
+  //构建 post 需要的主体
+  const postForm :FormData = new FormData()
+  postForm.append("file", file, filename)
+  postForm.append("allowedDownloads", allowedDownloads)
+  postForm.append("expiryDays", expiryDays)
+  if (password) { postForm.append("password", password) }
+  axios.post(config.gokapiurl, postForm , {
+    headers: {'apikey': config.gokapitoken, 'Content-Type': 'multipart/form-data'},
+  })
+    .then(res => {
+      const reply :gokapiReply = {
+        url: `${res.data.Url}${res.data.FileInfo.Id}`,
+        hotlinkUrl: res.data.FileInfo.HotlinkId? `${res.data.HotlinkUrl}${res.data.FileInfo.HotlinkId}`:undefined,
+        expirDays: expiryDays,
+        allowedDownloads: allowedDownloads,
+        password: password? password:undefined
+      }
+      callback(reply)
+    })
+    .catch(function (error) {
+      log.error(`gokapi: ${error.toString()}`)
+    })
+}
+// 构建回复所要用的 object 类型
+interface gokapiReply {
+  url :string,
+  hotlinkUrl? :string,
+  expirDays :number,
+  allowedDownloads :number,
+  password? :string
 }

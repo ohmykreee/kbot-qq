@@ -160,7 +160,7 @@ function fetchMsg(msg :string) :void {
     log.debug(`getOSUStats: end of querying ${stats.count} players`)
     const now = new Date() // 用于输出查询时时间，和判断是否需要使用“卷王”称号
     // 将最终查询结果转存入查询结果变量中
-    statsResult = `${now.getHours() > 22 || now.getHours() < 4 ? '卷王列表':'在线列表'}（更新时间 ${now.getHours().toLocaleString('en-US',{minimumIntegerDigits: 2})}:${now.getMinutes().toLocaleString('en-US',{minimumIntegerDigits: 2})}）：${stats.reply}\n-----`
+    statsResult = `${now.getHours() > 22 || now.getHours() < 4 ? '卷王列表':'在线列表'}（更新时间 ${now.getMonth()}月${now.getDate()}日 ${now.getHours().toLocaleString('en-US',{minimumIntegerDigits: 2})}:${now.getMinutes().toLocaleString('en-US',{minimumIntegerDigits: 2})}）：${stats.reply}\n-----`
     // 清空临时查询变量内内容
     stats.count = 0
     stats.reply = ''

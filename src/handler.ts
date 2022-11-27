@@ -8,7 +8,8 @@ import { osuname } from "./list/osu"
 import { version } from '../package.json'
 import { getOSUStats } from "./online"
 import { updateOSUStats } from "./online"
-import { text2img, getOsuToken } from "./utils"
+import { text2img, getOsuToken, uploadToGokapi } from "./utils"
+import { randomBytes } from "crypto"
 
 /**
  * 处理消息并返回回复消息字符串
@@ -42,6 +43,7 @@ export function msgHandler(msg :Array<string>, qqid :number, callback: (reply :s
 /抽一张             从盲盒里抽一张，0.05% / 4000井有神秘奖励？\n
 /推 [推特ID]        返回最新的一条推文（且用且珍惜）(alpha)\n
 /推图 [推特ID]      返回最新的一条带图片推文（且用且珍惜）(alpha)\n
+/img [图片]         上传图片并生成链接（记得/img后面要加空格）\n
 /re [osu!用户名]    猫猫机器人崩了用这个备用（只能返回简单数据）\n
 /pr [osu!用户名]    猫猫机器人崩了用这个备用（只能返回简单数据）\n
 /mp [命令]          自动房主的多人房间，建议先使用"/mp help" 了解更多(alpha)\n
@@ -231,6 +233,40 @@ ${recent.user.username} (mode: ${recent.mode})
               }
             })
           })
+      break
+
+    case "img":
+      if (!msg[1]) {
+        reply = "未检测到图片，请在“/img ”命令后附带上图片后再次上传！"
+        callback(reply)
+      } else {
+        // 依据 “[CQ:” 拆分 CQ code 为 array,且只留下 image 对象
+        const CQcode :Array<string> = msg[1].split("[CQ:").filter(n => n.slice(0, 5) === "image")
+        if (CQcode.length !== 1) {
+          reply = "上传了多张图片，请重新确认后再次上传！"
+          callback(reply)
+        } else {
+          const imgUrl :string = CQcode[0].split(",")[2].slice(4, -1)
+          axios.get(imgUrl, { responseType: 'arraybuffer' })
+            .then(res => {
+              // 随机一个文件名
+              const fileName :string = `kbot-${qqid}-${randomBytes(5).toString('hex')}.${res.headers["content-type"].split("/")[1]}`
+              uploadToGokapi(res.data, fileName, 7, 0, function(gokapi) {
+                if (gokapi.hotlinkUrl) {
+                  reply = `上传成功！\n链接： ${gokapi.hotlinkUrl}\n有效期：${gokapi.expirDays} 天`
+                  callback(reply)
+                } else {
+                  reply = "出现未知错误：未获取到直链。请通知管理员！"
+                  log.error("imgUpload: can't get gokapi.HotlinkUrl")
+                  callback(reply)
+                }
+              })
+            })
+            .catch(function (error) {
+              log.error(error.toString())
+            })
+        }
+      }
       break
 
     case "mp":

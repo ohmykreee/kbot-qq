@@ -241,12 +241,13 @@ ${recent.user.username} (mode: ${recent.mode})
         callback(reply)
       } else {
         // 依据 “[CQ:” 拆分 CQ code 为 array,且只留下 image 对象
-        const CQcode :Array<string> = msg[1].split("[CQ:").filter(n => n.slice(0, 5) === "image")
-        if (CQcode.length !== 1) {
+        const CQcodes :Array<string> = msg[1].split("[CQ:").filter(n => n.slice(0, 5) === "image")
+        if (CQcodes.length !== 1) {
           reply = "上传了多张图片，请重新确认后再次上传！"
           callback(reply)
         } else {
-          const imgUrl :string = CQcode[0].split(",")[2].slice(4, -1)
+          const codeParam = CQcodes[0].split(",")
+          const imgUrl :string = codeParam[codeParam.length - 1].slice(4, -1)
           axios.get(imgUrl, { responseType: 'arraybuffer' })
             .then(res => {
               // 随机一个文件名

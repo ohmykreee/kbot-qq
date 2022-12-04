@@ -41,12 +41,12 @@ export function msgHandler(msg :Array<string>, qqid :number, callback: (reply :s
 /吃什么             不知道今天中午/晚上吃什么？问我！\n
 /星期四             星期四？想什么呢！\n
 /抽一张             从盲盒里抽一张，0.05% / 4000井有神秘奖励？\n
-/推 [推特ID]        返回最新的一条推文（且用且珍惜）(alpha)\n
-/推图 [推特ID]      返回最新的一条带图片推文（且用且珍惜）(alpha)\n
+/推 [推特ID]        返回最新的一条推文（且用且珍惜）\n
+/推图 [推特ID]      返回最新的一条带图片推文（且用且珍惜）\n
 /img [图片]         上传图片并生成链接（记得/img后面要加空格）\n
 /re [osu!用户名]    猫猫机器人崩了用这个备用（只能返回简单数据）\n
 /pr [osu!用户名]    猫猫机器人崩了用这个备用（只能返回简单数据）\n
-/mp [命令]          自动房主的多人房间，建议先使用"/mp help" 了解更多(alpha)\n
+/mp [命令]          自动房主的多人房间，建议先使用"/mp help" 了解更多\n
 `
       callback(text2img(reply))
       break
@@ -118,7 +118,7 @@ export function msgHandler(msg :Array<string>, qqid :number, callback: (reply :s
       let twitterId :string = msg.slice(1).join(" ")
       let twitterUrl :string = msg[0] === "推图"? `${config.nitterurl}${twitterId}/media/rss`:`${config.nitterurl}${twitterId}/rss`
       // 判断推特ID是否存在
-      if (!twitterId) {
+      if (!twitterId || !twitterId.match(/^[A-Za-z0-9_]+$/)) {
         callback("请输入有效的ID！")
         return
       }
@@ -155,7 +155,7 @@ export function msgHandler(msg :Array<string>, qqid :number, callback: (reply :s
           if (error.response && error.response.status === 404) {
             callback(`未找到该账户：@ ${twitterId}`)
           } else {
-            log.error(error)
+            log.error(`fetchTweets: ${error.toString()}`)
           }
         })
         break
@@ -166,7 +166,7 @@ export function msgHandler(msg :Array<string>, qqid :number, callback: (reply :s
             callback(`[CQ:image,file=${res.request.protocol}//${res.request.host}${res.request.path}]`)
           })
           .catch(function (error) {
-            log.error(error)
+            log.error(`fetchRandomImg: ${error.toString()}`)
           })
         break
 
@@ -179,7 +179,7 @@ export function msgHandler(msg :Array<string>, qqid :number, callback: (reply :s
             user = user.replace(/&#91;/i, '[');
             user = user.replace(/&#93;/i, ']');
             // 判断是否存在用户名
-            if (!user) {
+            if (!user || !user.match(/^[A-Za-z0-9 \[\]_-]+$/)) {
               callback('请输入有效的用户名！')
               return
             }
@@ -243,7 +243,7 @@ ${recent.user.username} (mode: ${recent.mode})
         // 依据 “[CQ:” 拆分 CQ code 为 array,且只留下 image 对象
         const CQcodes :Array<string> = msg[1].split("[CQ:").filter(n => n.slice(0, 5) === "image")
         if (CQcodes.length !== 1) {
-          reply = "上传了多张图片，请重新确认后再次上传！"
+          reply = "格式不规范（上传了多张图片/上传了非图片内容），请重新确认后再次上传！"
           callback(reply)
         } else {
           const codeParam = CQcodes[0].split(",")
@@ -264,7 +264,7 @@ ${recent.user.username} (mode: ${recent.mode})
               })
             })
             .catch(function (error) {
-              log.error(error.toString())
+              log.error(`uploadGokapi: ${error.toString()}`)
             })
         }
       }

@@ -32,21 +32,21 @@ export function msgHandler(msg :Array<string>, qqid :number, callback: (reply :s
       reply = 
 `狗勾机器人(Kreee bot)主菜单命令：
 （电脑 QQ 建议关闭 “使用快捷键输入表情”功能）\n
-/help               输出该帮助信息\n
-/ping               康康机器人有没有在摸鱼\n
-/关于               关于这个机器人的一切\n
-/在线               返回 osu! 查询列表里在线玩家\n
-/在线 列表          返回 osu! 在线查询列表里的所有人\n
-/在线 更新          立即请求一次 osu! 在线列表的更新\n
-/吃什么             不知道今天中午/晚上吃什么？问我！\n
-/星期四             星期四？想什么呢！\n
-/抽一张             从盲盒里抽一张，0.05% / 4000井有神秘奖励？\n
-/推 [推特ID]        返回最新的一条推文（且用且珍惜）\n
-/推图 [推特ID]      返回最新的一条带图片推文（且用且珍惜）\n
-/img [图片]         上传图片并生成链接（记得/img后面要加空格）\n
-/re [osu!用户名]    猫猫机器人崩了用这个备用（只能返回简单数据）\n
-/pr [osu!用户名]    猫猫机器人崩了用这个备用（只能返回简单数据）\n
-/mp [命令]          自动房主的多人房间，建议先使用"/mp help" 了解更多\n
+/help                                输出该帮助信息\n
+/ping                                康康机器人有没有在摸鱼\n
+/关于                                关于这个机器人的一切\n
+/在线                                返回 osu! 查询列表里在线玩家\n
+/在线 列表                           返回 osu! 在线查询列表里的所有人\n
+/在线 更新                           立即请求一次 osu! 在线列表的更新\n
+/吃什么                              不知道今天中午/晚上吃什么？问我！\n
+/星期四                              星期四？想什么呢！\n
+/抽一张                              从盲盒里抽一张，0.05% / 4000井有神秘奖励？\n
+/推 [推特ID]                         返回最新的一条推文（且用且珍惜）\n
+/推图 [推特ID]                       返回最新的一条带图片推文（且用且珍惜）\n
+/img [图片]                          上传图片并生成链接（记得/img后面要加空格）\n
+/re [osu!用户名] :[模式数字(可选)]    猫猫机器人崩了用这个备用（只能返回简单数据）\n
+/pr [osu!用户名] :[模式数字(可选)]    猫猫机器人崩了用这个备用（只能返回简单数据）\n
+/mp [命令]                           自动房主的多人房间，建议先使用"/mp help" 了解更多\n
 `
       callback(text2img(reply))
       break
@@ -172,35 +172,72 @@ export function msgHandler(msg :Array<string>, qqid :number, callback: (reply :s
 
     case "re":
     case "pr":
-        // 获取token
-          getOsuToken(function(token) {
-            // 获取用户id，以及替换两个奇葩字符 []
-            let user :string = msg.slice(1).join(" ")
-            user = user.replace(/&#91;/i, '[');
-            user = user.replace(/&#93;/i, ']');
-            // 判断是否存在用户名
-            if (!user || !user.match(/^[A-Za-z0-9 \[\]_-]+$/)) {
-              callback('请输入有效的用户名！')
-              return
+      // 获取用户最近游玩
+      const includeFailed :number = msg[0] === "re"? 1:0
+      // 判断是否需要指定查询模式
+      let queryMode :string = ""
+      if ([":0", ":1", ":2", ":3", "：0", "：1", "：2", "：3"].includes(msg[msg.length - 1])) {
+        switch (msg[msg.length - 1]) {
+          case ":0":
+          case "：0":
+            queryMode = "osu"
+            break
+          case ":1":
+          case "：1":
+            queryMode = "taiko"
+            break
+          case ":2":
+          case "：2":
+            queryMode = "fruits"
+            break
+          case ":3":
+          case "：3":
+            queryMode = "mania"
+            break
+        }
+      }
+      // 获取用户id，以及替换两个奇葩字符 []
+      let user :string = queryMode? msg.slice(1, -1).join(" "):msg.slice(1).join(" ")
+      user = user.replace(/&#91;/i, '[');
+      user = user.replace(/&#93;/i, ']');
+      // 判断是否存在用户名
+      if (!user || !user.match(/^[A-Za-z0-9 \[\]_-]+$/)) {
+        callback('请输入有效的用户名！')
+        return
+      }
+      // 获取token
+        getOsuToken(function(token) {
+          axios.get(`https://osu.ppy.sh/api/v2/users/${user}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
             }
-            axios.get(`https://osu.ppy.sh/api/v2/users/${user}`, {
+          })
+          .then(res => {
+            const userid = res.data.id
+            axios.get(`https://osu.ppy.sh/api/v2/users/${userid}/scores/recent?include_fails=${includeFailed}&limit=1${queryMode? `&mode=${queryMode}`:""}`, {
               headers: {
                 'Authorization': `Bearer ${token}`
               }
             })
-            .then(res => {
-              const userid = res.data.id
-              // 获取用户最近游玩
-              const includeFailed :number = msg[0] === "re"? 1:0
-              axios.get(`https://osu.ppy.sh/api/v2/users/${userid}/scores/recent?include_fails=${includeFailed}&limit=1`, {
-                headers: {
-                  'Authorization': `Bearer ${token}`
+            .then (res => {
+              if (!(res.data.length === 0)) {
+                const recent = res.data[0]
+                let noteCount :string = ""
+                switch (recent.mode) {
+                  case "osu":
+                    noteCount = `300: ${recent.statistics.count_300}\n\t100: ${recent.statistics.count_100}\n\t50: ${recent.statistics.count_50}\n\tmiss: ${recent.statistics.count_miss}`
+                    break
+                  case "taiko":
+                    noteCount = `great: ${recent.statistics.count_300}\n\tgood: ${recent.statistics.count_100}\n\tbad: ${recent.statistics.count_50}\n\tmiss: ${recent.statistics.count_100}`
+                    break
+                  case "fruits":
+                    noteCount = `fruit: ${recent.statistics.count_300}\n\tdrop: ${recent.statistics.count_100}\n\tdroplet: ${recent.statistics.count_50}\n\tdroplet miss: ${recent.statistics.count_katu}\n\tmiss: ${recent.statistics.count_miss}`
+                    break
+                  case "mania":
+                    noteCount = `max: ${recent.statistics.count_geki}\n\tperfect: ${recent.statistics.count_300}\n\tgreat: ${recent.statistics.count_katu}\n\tgood: ${recent.statistics.count_100}\n\tbad: ${recent.statistics.count_50}\n\tmiss: ${recent.statistics.count_miss}`
+                    break
                 }
-              })
-              .then (res => {
-                if (!(res.data.length === 0)) {
-                  const recent = res.data[0]
-                  let reply :string = 
+                let reply :string = 
 `
 ${recent.user.username} (mode: ${recent.mode})
 \n----------\n
@@ -215,25 +252,27 @@ ${recent.user.username} (mode: ${recent.mode})
     pp: ${recent.pp? recent.pp:"未 Ranked 或非最佳成绩"}
     Combos: ${recent.max_combo}
     ${recent.mods.length > 0? `mods：${recent.mods.toString()}`:""}
+\n----------\n
+${noteCount}
 `
-                  callback(text2img(reply))
-                } else {
-                  callback(`${user} 最近还没有打过图哦...`)
-                }
-              })
-              .catch(function (error) {
-                log.error(`osu-score: when get user-score: ${error.toString()}`)
-              })
-            })
-            .catch(function (error) {
-              if (error.response && error.response.status === 404) {
-                callback(text2img(`未找到该账户：${user}`))
+                callback(text2img(reply))
               } else {
-                log.error(`osu-score: when get user-id: ${error.toString()}`)
+                callback(`${user} 最近还没有打过图哦...`)
               }
             })
+            .catch(function (error) {
+              log.error(`osu-score: when get user-score: ${error.toString()}`)
+            })
           })
-      break
+          .catch(function (error) {
+            if (error.response && error.response.status === 404) {
+              callback(text2img(`未找到该账户：${user}`))
+            } else {
+              log.error(`osu-score: when get user-id: ${error.toString()}`)
+            }
+          })
+        })
+    break
 
     case "img":
       if (!msg[1]) {

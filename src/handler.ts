@@ -225,16 +225,16 @@ export function msgHandler(msg :Array<string>, qqid :number, callback: (reply :s
                 let noteCount :string = ""
                 switch (recent.mode) {
                   case "osu":
-                    noteCount = `300: ${recent.statistics.count_300}\n\t100: ${recent.statistics.count_100}\n\t50: ${recent.statistics.count_50}\n\tmiss: ${recent.statistics.count_miss}`
+                    noteCount = `\t300: ${recent.statistics.count_300}\n\t100: ${recent.statistics.count_100}\n\t50: ${recent.statistics.count_50}\n\tmiss: ${recent.statistics.count_miss}`
                     break
                   case "taiko":
-                    noteCount = `great: ${recent.statistics.count_300}\n\tgood: ${recent.statistics.count_100}\n\tbad: ${recent.statistics.count_50}\n\tmiss: ${recent.statistics.count_100}`
+                    noteCount = `\tgreat: ${recent.statistics.count_300}\n\tgood: ${recent.statistics.count_100}\n\tbad: ${recent.statistics.count_50}\n\tmiss: ${recent.statistics.count_100}`
                     break
                   case "fruits":
-                    noteCount = `fruit: ${recent.statistics.count_300}\n\tdrop: ${recent.statistics.count_100}\n\tdroplet: ${recent.statistics.count_50}\n\tdroplet miss: ${recent.statistics.count_katu}\n\tmiss: ${recent.statistics.count_miss}`
+                    noteCount = `\tfruit: ${recent.statistics.count_300}\n\tdrop: ${recent.statistics.count_100}\n\tdroplet: ${recent.statistics.count_50}\n\tdroplet miss: ${recent.statistics.count_katu}\n\tmiss: ${recent.statistics.count_miss}`
                     break
                   case "mania":
-                    noteCount = `max: ${recent.statistics.count_geki}\n\tperfect: ${recent.statistics.count_300}\n\tgreat: ${recent.statistics.count_katu}\n\tgood: ${recent.statistics.count_100}\n\tbad: ${recent.statistics.count_50}\n\tmiss: ${recent.statistics.count_miss}`
+                    noteCount = `\tmax: ${recent.statistics.count_geki}\n\tperfect: ${recent.statistics.count_300}\n\tgreat: ${recent.statistics.count_katu}\n\tgood: ${recent.statistics.count_100}\n\tbad: ${recent.statistics.count_50}\n\tmiss: ${recent.statistics.count_miss}`
                     break
                 }
                 let reply :string = 
@@ -250,8 +250,7 @@ ${recent.user.username} (mode: ${recent.mode})
     得分：${recent.score}
     准度：${Math.floor(recent.accuracy * 100000) / 1000}% (Rank: ${recent.rank})
     pp: ${recent.pp? recent.pp:"未 Ranked 或非最佳成绩"}
-    Combos: ${recent.max_combo}
-    ${recent.mods.length > 0? `mods：${recent.mods.toString()}`:""}
+    Combos: ${recent.max_combo} ${recent.mods.length > 0? `\nmods：${recent.mods.toString()}`:""}
 \n----------\n
 ${noteCount}
 `

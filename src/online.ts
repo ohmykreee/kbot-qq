@@ -39,9 +39,9 @@ export function startIRC() :void {
   })
   client = IRC(stream)
   // 传入登录所用信息
-  client.user(config.ircusername, config.ircusername)
-  client.pass(config.ircpassword)
-  client.nick(config.ircusername)
+  client.user(config.osuIrcUsername, config.osuIrcUsername)
+  client.pass(config.osuIrcPassword)
+  client.nick(config.osuIrcUsername)
   // 传入事件触发函数，且仅接受来自 BanchoBot 的消息
   client.on('message', function(msg) {
     if (msg.from === 'BanchoBot') {
@@ -51,7 +51,7 @@ export function startIRC() :void {
   // 开始第一次查询
   askBancho()
   // 开始程序运行时第一次 timeout 随机值选取
-  timeout = Math.floor(Math.random() * (config.ircintervalMax - config.ircintervalMin + 1) + config.ircintervalMin)
+  timeout = Math.floor(Math.random() * (config.osuIrcIntervalMax - config.osuIrcIntervalMin + 1) + config.osuIrcIntervalMin)
   // 若是程序第一次运行，开始运行定时查询
     queryTimer()
 }
@@ -80,7 +80,7 @@ export function stopIRC () :void{
 function queryTimer() :void {
   setTimeout(() => {
     askBancho()
-    timeout = Math.floor(Math.random() * (config.ircintervalMax - config.ircintervalMin + 1) + config.ircintervalMin)
+    timeout = Math.floor(Math.random() * (config.osuIrcIntervalMax - config.osuIrcIntervalMin + 1) + config.osuIrcIntervalMin)
     queryTimer() // 重复调用自身，形成循环
   }, timeout * 60000);
 }
@@ -91,17 +91,19 @@ function queryTimer() :void {
  * @remarks
  * 当有来自 handler.ts 的查询请求时，从 {@link statsResult} 中获取结果字符串并通过回调函数返回
  *
- * @param callback - 回调函数，返回值为字符串
+ * @returns Promise<string>，返回值为字符串
  * 
  */
-export function getOSUStats(callback: (reply :string) => void) :void {
+export function getOSUStats() :Promise<string> {
+  return new Promise((resolve, reject) => {
   // 判断 statsResult 是否为空，一般为程序首次运行时过早提交查询请求
   if (statsResult !== '') {
-    callback(`${statsResult}${appStatus.isMP? "\n（注意：因正在主持多人游戏，查询已暂停）":""}`)
+    resolve(`${statsResult}${appStatus.isMP? "\n（注意：因正在主持多人游戏，查询已暂停）":""}`)
   } else {
     log.error('getOSUStats: statsResult is empty')
-    callback('获取在线列表失败，请尝试执行命令：“/在线 更新”！')
+    reject('获取在线列表失败，请尝试执行命令：“/在线 更新”！')
   }
+  })
 }
 
 /**
@@ -110,17 +112,19 @@ export function getOSUStats(callback: (reply :string) => void) :void {
  * @remarks
  * 当有来自 handler.ts 的更新请求时，调用 {@link askBancho()} 并通过回调函数返回触发结果
  *
- * @param callback - 回调函数，返回值为字符串（成功或失败）
+ * @returns Promise<string>，返回值为字符串（成功或失败）
  * 
  */
-export function updateOSUStats(callback: (reply :string) => void) :void {
+export function updateOSUStats() :Promise<string> {
+  return new Promise((resolve, reject) => {
   // 判断 BanchoBot 的查询是否正在进行（锁是否被锁上）
   if (!appStatus.isQuery && !appStatus.isMP) {
-    callback('请求成功，正在更新在线列表...')
+    resolve('请求成功，正在更新在线列表...')
     askBancho()
   } else {
-    callback(`${appStatus.isMP? "查询已暂停":"查询正忙"}，请稍后查询...`)
+    reject(`${appStatus.isMP? "查询已暂停":"查询正忙"}，请稍后查询...`)
   }
+  })
 }
 
 /**

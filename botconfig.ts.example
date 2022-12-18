@@ -1,35 +1,37 @@
 interface botconf {
-  url: string
-  token: string
   debug: boolean
-  adminqq: Array<number>
+  cqhttpUrl: string
+  cqhttpToken?: string
+  adminQQ: Array<number>
   description: string
-  gokapiurl: string
-  gokapitoken: string
-  ircintervalMin :number
-  ircintervalMax :number
-  nitterurl :string
-  maxloghistory :number
-  osuclientid :number
-  osuclientsecret :string
-  ahrcwd :string
+  gokapiUrl: string
+  gokapiToken: string
+  osuIrcUsername: string
+  osuIrcPassword: string
+  osuIrcIntervalMin :number
+  osuIrcIntervalMax :number
+  osuClientId :number
+  osuClientSecret :string
+  nitterUrl :string
+  maxLogHistory :number
+  ahrCWD :string
 }
 
 export const config :botconf = {
-  url: "",
-  token: "",
   debug: false,
-  adminqq: [1234567890,0987654321],
+  cqhttpUrl: "",
+  cqhttpToken: "",
+  adminQQ: [123456789, 987654321],
   description: "实用化，固定的命令与简单的触发关键字符。",
-  gokapiurl: "",
-  gokapitoken: "",
-  ircusername: "",
-  ircpassword: "",
-  ircintervalMin: 10,
-  ircintervalMax: 3,
-  nitterurl: "",
-  maxloghistory: 100,
-  osuclientid: ,
-  osuclientsecret: "",
-  ahrcwd: ""
+  gokapiUrl: "",
+  gokapiToken: "",
+  osuIrcUsername: "",
+  osuIrcPassword: "",
+  osuIrcIntervalMin: 5,
+  osuIrcIntervalMax: 10,
+  nitterUrl: "https://nitter.net/",
+  maxLogHistory: 100,
+  osuClientId: ,
+  osuClientSecret: "",
+  ahrCWD: "./osuahr"
 }

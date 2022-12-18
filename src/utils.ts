@@ -41,22 +41,25 @@ export function text2img(text :string) :string {
  * @remarks
  * 文档 {@link https://osu.ppy.sh/docs/index.html#client-credentials-grant}，适用范围仅为 public
  *
- * @param callback - 回调函数，返回值为字符串
+ * @return Promise<string>，返回值为 osu!api token 字符串
  * 
  */
-export function getOsuToken(callback: (reply :string) => void) :void {
-  axios.post("https://osu.ppy.sh/oauth/token", {
-    client_id: config.osuclientid,
-    client_secret: config.osuclientsecret,
-    grant_type: "client_credentials",
-    scope: "public"
+export function getOsuToken() :Promise<string> {
+  return new Promise((resolve, reject) => {
+    axios.post("https://osu.ppy.sh/oauth/token", {
+      client_id: config.osuClientId,
+      client_secret: config.osuClientSecret,
+      grant_type: "client_credentials",
+      scope: "public"
+    })
+      .then(res => {
+        resolve(res.data.access_token)
+      })
+      .catch(function (error) {
+        log.error(`osu-get-token: ${error.toString()}`)
+        reject(error)
+      })
   })
-    .then(res => {
-      callback(res.data.access_token)
-    })
-    .catch(function (error) {
-      log.error(`osu-get-token: ${error.toString()}`)
-    })
 }
 
 /**
@@ -69,34 +72,11 @@ export function getOsuToken(callback: (reply :string) => void) :void {
  * @param filename - 需要上传文件的文件名
  * @param expiryDays - 过期天数（0 为无限制）
  * @param allowedDownloads - 允许下载次数（0 为无限制）
- * @param callback - 回调函数，返回值为 {@link gokapiReturn}
- * @param password - 访问密码（可选）
+ * @param password - （可选）访问密码
+ * 
+ * @returns Promise<gokapiReply> ，返回值为 {@link gokapiReturn}
  * 
  */
-export function uploadToGokapi(file :ArrayBuffer, filename :string, expiryDays :number, allowedDownloads :number, callback: (reply :gokapiReply) => void, password? :string) :void {
-  //构建 post 需要的主体
-  const postForm :FormData = new FormData()
-  postForm.append("file", file, filename)
-  postForm.append("allowedDownloads", allowedDownloads)
-  postForm.append("expiryDays", expiryDays)
-  if (password) { postForm.append("password", password) }
-  axios.post(config.gokapiurl, postForm , {
-    headers: {'apikey': config.gokapitoken, 'Content-Type': 'multipart/form-data'},
-  })
-    .then(res => {
-      const reply :gokapiReply = {
-        url: `${res.data.Url}${res.data.FileInfo.Id}`,
-        hotlinkUrl: res.data.FileInfo.HotlinkId? `${res.data.HotlinkUrl}${res.data.FileInfo.HotlinkId}`:undefined,
-        expirDays: expiryDays,
-        allowedDownloads: allowedDownloads,
-        password: password? password:undefined
-      }
-      callback(reply)
-    })
-    .catch(function (error) {
-      log.error(`gokapi: ${error.toString()}`)
-    })
-}
 // 构建回复所要用的 object 类型
 interface gokapiReply {
   url :string,
@@ -104,4 +84,31 @@ interface gokapiReply {
   expirDays :number,
   allowedDownloads :number,
   password? :string
+}
+export function uploadToGokapi(file :ArrayBuffer, filename :string, expiryDays :number, allowedDownloads :number, password? :string) :Promise<gokapiReply> {
+  return new Promise((resolve, reject) => {
+    //构建 post 需要的主体
+    const postForm :FormData = new FormData()
+    postForm.append("file", file, filename)
+    postForm.append("allowedDownloads", allowedDownloads)
+    postForm.append("expiryDays", expiryDays)
+    if (password) { postForm.append("password", password) }
+    axios.post(config.gokapiUrl, postForm , {
+      headers: {'apikey': config.gokapiToken, 'Content-Type': 'multipart/form-data'},
+    })
+      .then(res => {
+        const reply :gokapiReply = {
+          url: `${res.data.Url}${res.data.FileInfo.Id}`,
+          hotlinkUrl: res.data.FileInfo.HotlinkId? `${res.data.HotlinkUrl}${res.data.FileInfo.HotlinkId}`:undefined,
+          expirDays: expiryDays,
+          allowedDownloads: allowedDownloads,
+          password: password? password:undefined
+        }
+        resolve(reply)
+      })
+      .catch(function (error) {
+        log.error(`gokapi: ${error.toString()}`)
+        reject(error)
+      })
+  })
 }

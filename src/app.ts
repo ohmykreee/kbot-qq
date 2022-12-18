@@ -42,7 +42,7 @@ export const appStatus :appStatus = {
 }
 
 // 初始化 WebSocket，并传入事件触发函数
-const client = new WebSocket(config.url + '?access_token=' + config.token)
+const client = new WebSocket(`${config.cqhttpUrl}${config.cqhttpToken? `?access_token=${config.cqhttpToken}`:undefined}`)
 client.addEventListener('message', function (event) {
   ifNeedResponed(JSON.parse(event.data as string))
 })
@@ -77,7 +77,7 @@ function ifNeedResponed(data :any) :void {
     if (msg.raw_text.slice(0, 1) === '/') {
       const command :string = msg.raw_text.slice(1)
       // 判断是否是来自私聊的管理员的命令
-      if (msg.message_type === 'private' && config.adminqq.includes(msg.user_id) && /^kbot/g.test(command)) {
+      if (msg.message_type === 'private' && config.adminQQ.includes(msg.user_id) && /^kbot/g.test(command)) {
         fetchResponse(msg, command, "admin")
         log.info(`[${msg.user_id}] [Admin] ${command}`)
       // 判断是否来自群聊的mp命令
@@ -137,19 +137,22 @@ function fetchResponse(msg: msg, text :string, type :'admin' | 'mp' | 'main' | '
   // 判断消息的类型
   switch (type) {
     case "admin":
-      adminHandler(textArray, function(reply) {
-        msgReply(reply)
-      })
+      adminHandler(textArray)
+        .then ((reply) => {
+          msgReply(reply)
+        })
       break
     case "mp":
-      mpHandler(textArray, function(reply) {
-        msgReply(reply)
-      })
+      mpHandler(textArray)
+        .then((reply) => {
+          msgReply(reply)
+        })
       break
     case "main":
-      msgHandler(textArray, msg.user_id, function(reply) {
-        msgReply(reply)
-      })
+      msgHandler(textArray, msg.user_id)
+        .then((reply) => {
+          msgReply(reply)
+        })
       break
     case "other":
       // 走一些命令前不带 / 的特殊字符
@@ -229,7 +232,7 @@ function handleCallback(data :any) :void {
  * 
  */
 export function adminNotify(msg :string) :void {
-  for (const QQid of config.adminqq) {
+  for (const QQid of config.adminQQ) {
     const msg_params :msg_params = {
       message: `${msg}\n(for Admin) ${config.debug? "(Dev mode)":""}`,
       user_id: QQid,

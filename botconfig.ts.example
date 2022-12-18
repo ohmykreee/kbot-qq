@@ -1,22 +1,4 @@
-interface botconf {
-  debug: boolean
-  cqhttpUrl: string
-  cqhttpToken?: string
-  adminQQ: Array<number>
-  description: string
-  gokapiUrl: string
-  gokapiToken: string
-  osuIrcUsername: string
-  osuIrcPassword: string
-  osuIrcIntervalMin :number
-  osuIrcIntervalMax :number
-  osuClientId :number
-  osuClientSecret :string
-  nitterUrl :string
-  maxLogHistory :number
-  ahrCWD :string
-}
-
+// 修改设置时，仅修改以下代码块！
 export const config :botconf = {
   debug: false,
   cqhttpUrl: "",
@@ -34,4 +16,24 @@ export const config :botconf = {
   osuClientId: ,
   osuClientSecret: "",
   ahrCWD: "./osuahr"
+}
+
+// 以下内容请勿修改！
+interface botconf {
+  debug: boolean
+  cqhttpUrl: string
+  cqhttpToken?: string
+  adminQQ: Array<number>
+  description: string
+  gokapiUrl: string
+  gokapiToken: string
+  osuIrcUsername: string
+  osuIrcPassword: string
+  osuIrcIntervalMin :number
+  osuIrcIntervalMax :number
+  osuClientId :number
+  osuClientSecret :string
+  nitterUrl :string
+  maxLogHistory :number
+  ahrCWD :string
 }

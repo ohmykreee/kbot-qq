@@ -124,8 +124,8 @@ function getDateString() :string {
  */
 function saveLog(logtext :string) :void {
   logHistory.push(logtext)
-  if (logHistory.length > config.maxloghistory) {
-    logHistory.splice(0, logHistory.length - config.maxloghistory)
+  if (logHistory.length > config.maxLogHistory) {
+    logHistory.splice(0, logHistory.length - config.maxLogHistory)
     log.debug('logHistory trim has been triggered.')
   }
 }
@@ -140,6 +140,13 @@ function saveLog(logtext :string) :void {
  * @param callback - 回调函数，返回值为一个包含指定数目日志的数组
  * 
  */
-export function readLog(count :number, callback:(logs :Array<string>) => void) :void {
-  callback(logHistory.slice(-count))
+export function readLog(count :number) :Promise<Array<string>> {
+  return new Promise((resolve, reject) => {
+    const logs :Array<string> = logHistory.slice(-count)
+    if (logs.length > 0) {
+      resolve(logs)
+    } else {
+      reject("Error: Can not get logs (logs.length < 0)")
+    }
+  })
 }

@@ -93,7 +93,7 @@ export function uploadToGokapi(file :ArrayBuffer, filename :string, expiryDays :
     postForm.append("allowedDownloads", allowedDownloads)
     postForm.append("expiryDays", expiryDays)
     if (password) { postForm.append("password", password) }
-    axios.post(config.gokapiUrl, postForm , {
+    axios.post(config.gokapiUrl + "files/add", postForm , {
       headers: {'apikey': config.gokapiToken, 'Content-Type': 'multipart/form-data'},
     })
       .then(res => {

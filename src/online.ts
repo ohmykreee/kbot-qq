@@ -198,11 +198,14 @@ async function askBancho() :Promise<void> {
     }
   } else if (appStatus.isQuery) {
     // 如果撞锁多次，则强制停止程序
-    if (isBusyCounter > 2) {
-      log.fatal('askBancho: cannot start because isQuery = true, exit.')
-    } else {
-      isBusyCounter = isBusyCounter + 1
-      log.warn(`askBancho: cannot start because isQuery = true, counter ${isBusyCounter}`)
-    }
+    // if (isBusyCounter > 2) {
+    //   log.fatal('askBancho: cannot start because isQuery = true, exit.')
+    // } else {
+    //   isBusyCounter = isBusyCounter + 1
+    //   log.warn(`askBancho: cannot start because isQuery = true, counter ${isBusyCounter}`)
+    // }
+    // 更改为：如果撞锁，则强制停止程序
+    // TODO: 多测试一段时间，确保稳定性
+    log.fatal('askBancho: cannot start because isQuery = true, exit.')
   }
 }

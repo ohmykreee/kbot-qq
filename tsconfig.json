@@ -9,6 +9,7 @@
   "ts-node": {
     "esm": true
   },
-  "include": ["src/**/*", "plugins/**/*", "package.json"],
+  "files": ["package.json", "package-lock.json"],
+  "include": ["src/**/*", "plugins/**/*", "plugins/**/*.json"],
   "exclude": ["node_modules", "**/*.spec.ts", "osuahr"]
 }

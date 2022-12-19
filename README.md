@@ -153,14 +153,30 @@ cd plugins
 mkdir my-plugin
 cd my-plugin
 npm init
-cp ../example-plugin/app.ts ./
 npx tsc --init
+cp ../example-plugin/app.ts ./
+```
+在 `package.json` 中添加一行：
+```json
+{
+  "type": "module",
+}
+```
+在 `tsconfig.json` 中修改两行：
+```json
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "ESNext",
+  }
+}
 ```
 
 2. 安装依赖
 
-直接在插件的子目录处执行 `npm install --save [package]`，建议分发插件时附带上 `node_modules` 文件夹。   
-（如果选择精简分发文件，即不带上 `node_modules`，请务必带上 `package.json` 与 `package-lock.json`，并在部署前在插件子目录处执行一次 `npm install`）
+直接在插件的子目录处执行 `npm install --save [package]`。
+
+**注意:** 生成 js 文件时会自动带上插件的 `package.json` `package-lock.json` `tsconfig.json` 文件，在安装插件时需要在插件目录下执行一遍 `npm install`！
 
 3. 编写插件
 
@@ -174,7 +190,7 @@ npx tsc --init
 import path from 'path'
 
 const mainDir = path.resolve()
-const { ChatGPTAPIBrowser } = await import(`file:///${mainDir}/plugins/chatgpt/node_modules/chatgpt/build/`)
+const { ChatGPTAPIBrowser } = await import(`file:///${mainDir}/plugins/chatgpt/node_modules/chatgpt/build/index.js`)
 ```
 - 请勿修改程序关键部分，可能会引发未知错误。
 - 如果需要主动发送消息，可以导入 `../../src/plugin` 中的 `pluginSendMsg()` 方法，传递值与 `PluginClass.receiver()` 方法返回值类型相同。
@@ -184,7 +200,7 @@ const { ChatGPTAPIBrowser } = await import(`file:///${mainDir}/plugins/chatgpt/n
 cd ../../
 npm run build
 ```
-将会同时编译 `kbot-qq` 主体与所有插件为 js 文件于 `dist` 文件夹中。分发时可选择分发 js 文件。
+将会同时编译 `kbot-qq` 主体与所有插件为 js 文件于 `dist` 文件夹中。
 
 # 常见问题
 1. `text2img()`无法正确渲染中文等字体

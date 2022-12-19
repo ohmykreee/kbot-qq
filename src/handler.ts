@@ -5,7 +5,7 @@ import { JSDOM } from "jsdom"
 import { vw50 } from "./list/kfc-vw50.js"
 import { food } from "./list/food.js"
 import { osuname } from "./list/osu.js"
-// import { version } from '../package.json' assert { type: "json" }
+import info from '../package.json' assert { type: "json" }
 import { getOSUStats, updateOSUStats } from "./online.js"
 import { text2img, getOsuToken, uploadToGokapi } from "./utils.js"
 import { randomBytes } from "crypto"
@@ -54,7 +54,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
       
       case "关于":
       case "about":
-        reply = `(${config.debug? 'in dev mode':'in production'}) ${config.description}`
+        reply = `v${info.version} (${config.debug? 'in dev mode':'in production'}) ${config.description}`
         resolve(reply)
         break
     

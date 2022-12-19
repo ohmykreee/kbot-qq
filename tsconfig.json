@@ -1,10 +1,13 @@
 {
   "extends": "./node_modules/@tsconfig/node18/tsconfig.json",
   "compilerOptions": {
-    "module": "es2020",
+    "module": "esnext",
     "preserveConstEnums": true,
     "outDir": "dist",
     "resolveJsonModule": true
+  },
+  "ts-node": {
+    "esm": true
   },
   "include": ["src/**/*", "plugins/**/*", "package.json"],
   "exclude": ["node_modules", "**/*.spec.ts", "osuahr"]

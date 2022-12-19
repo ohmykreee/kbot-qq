@@ -5,7 +5,7 @@
   "type": "module",
   "main": "src/app.ts",
   "scripts": {
-    "dev": "npx ts-node-esm src/app.ts",
+    "dev": "npx ts-node src/app.ts",
     "build": "npx tsc",
     "server": "npx tsc && npx nodemon dist/src/app.js"
   },

@@ -50,21 +50,21 @@ npm install
 // 修改设置时，仅修改以下代码块！
 const config :botconf = {
   debug: false,
-  cqhttpUrl: "",
-  cqhttpToken: "",
+  cqhttpUrl: "ws://localhost:1234",
+  cqhttpToken: "this_is_a_very_long_token_for_cqhttp",
   adminQQ: [123456789, 987654321],
   description: "实用化，固定的命令与简单的触发关键字符。",
-  gokapiUrl: "",
-  gokapiToken: "",
-  osuIrcUsername: "",
-  osuIrcPassword: "",
+  gokapiUrl: "https://gokapi.example.site/api/",
+  gokapiToken: "this_is_a_very_long_token_for_gokapi",
+  osuIrcUsername: "Kreee",
+  osuIrcPassword: "this_is_a_very_long_passwd_for_irc",
   osuIrcIntervalMin: 5,
   osuIrcIntervalMax: 10,
-  nitterUrl: "https://nitter.net/",
+  nitterUrl: "https://nitter.example.site/",
   maxLogHistory: 100,
   osuClientId: 114514,
-  osuClientSecret: "",
-  ahrCWD: "./osuahr"
+  osuClientSecret: "this_is_a_very_long_secret_for_osu",
+  ahrCWD: "/usr/local/kbot-qq/osuahr"
 }
 
 // 以下内容请勿修改！
@@ -141,7 +141,7 @@ npm run dev
 同时需要在 `botconfig.ts` 中启用 `debug: true,`
 
 # 插件系统
-仍在早期开发中，不保证稳定性。
+仍在早期开发中，不保证稳定性。只有未命中 `kbot` 触发规则的命令才会传递给所有插件。
 
 **注意:** 请仅安装来自可信来源的插件！恶意插件可能会造成不可挽回的损失！
 

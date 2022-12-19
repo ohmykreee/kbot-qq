@@ -1,9 +1,9 @@
 import child_process from 'child_process'
-import { appStatus } from "./app"
-import { text2img } from "./utils"
-import { log } from "./logger"
-import { stopIRC, startIRC } from "./online"
-import { config } from "../botconfig"
+import { appStatus } from "./app.js"
+import { text2img } from "./utils.js"
+import { log } from "./logger.js"
+import { stopIRC, startIRC } from "./online.js"
+import config from "../botconfig.js"
 
 // 存储房间名称
 let roomName :string
@@ -11,11 +11,11 @@ let roomName :string
 let waitClose :boolean = false
 
 // 创建接口（灵感来源自：https://stackoverflow.com/questions/54185655/how-do-you-create-a-terminal-instance-within-a-nodejs-child-process）
-interface osuahr {
+interface osuahr_types {
   terminal: child_process.ChildProcessWithoutNullStreams
   send: (data :string) => void
 }
-let osuahr :osuahr
+let osuahr :osuahr_types
 
 /**
  * 初始化并启动 osu-ahr

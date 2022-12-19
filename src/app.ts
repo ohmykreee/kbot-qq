@@ -1,59 +1,61 @@
-import { config } from "../botconfig"
+import { msg_types, msg_response_types, msg_params_types, appStatus_types } from "./types.js"
+import config from "../botconfig.js"
 import { WebSocket } from "ws"
-import { msgHandler } from "./handler"
-import { adminHandler } from "./admin"
-import { mpHandler } from "./mp"
-import { startIRC } from "./online"
-import { log } from "./logger"
+import { msgHandler } from "./handler.js"
+import { adminHandler } from "./admin.js"
+import { mpHandler } from "./mp.js"
+import { startIRC } from "./online.js"
+import { log } from "./logger.js"
+import { pluginsLoad, pluginsUnload, pluginReceiveMsg } from "./plugin.js"
 
-// 用于定义用于存储传入消息的变量
-interface msg {
-  raw_text :string,
-  message_type :string,
-  group_id? :number,
-  user_id :number
-}
-
-// 用于定义用于存储回复消息的变量
-interface msg_response {
-  message_type :string,
-  text :string,
-  user_id :number,
-  group_id? :number
-}
-
-// 用于定义用于传给 go-cqhttp 的变量
-interface msg_params {
-  message_type :string,
-  user_id :number,
-  group_id? :number,
-  message :string,
-  auto_escape? :boolean
-}
-
-// 用于定义部分功能的运行状态，并导出给全局
-interface appStatus {
-  isQuery :boolean,
-  isMP :boolean
-}
-export const appStatus :appStatus = {
+export const appStatus :appStatus_types = {
   isQuery: false,
   isMP: false
 }
 
-// 初始化 WebSocket，并传入事件触发函数
+// 初始化 WebSocket，并先传入关闭与错误事件
 const client = new WebSocket(`${config.cqhttpUrl}${config.cqhttpToken? `?access_token=${config.cqhttpToken}`:undefined}`)
-client.addEventListener('message', function (event) {
-  ifNeedResponed(JSON.parse(event.data as string))
-})
 client.addEventListener('error', function(event) {
   log.error(`websocket error: ${event.error}`)
 })
 client.addEventListener('close' ,function(event) {
   log.fatal(`connection closed: ${event.reason}`)
 })
-// 启动 online.ts 中的 slate-irc 初始化
-startIRC()
+// TODO: 在数据库准备好后执行接下来的任务
+handleStart()
+// 在程序出现 kill/未知异常 时调用 handleExit() 
+// TODO: 需要更多的测试确保稳定性
+process.on('SIGINT', () => {process.stdin.resume(); handleExit(process.exitCode)})
+process.on('SIGUSR1', () => {process.stdin.resume(); handleExit(process.exitCode)})
+process.on('SIGUSR2', () => {process.stdin.resume(); handleExit(process.exitCode)})
+// if (!config.debug) { process.on('uncaughtException', () => {process.stdin.resume(); handleExit(process.exitCode)}) }
+
+/**
+ * 在程序准备好启动后执行
+ * 
+ * @remarks
+ * 目前仅在数据库载入数据完成后执行
+ */
+function handleStart() :void {
+  client.addEventListener('message', function (event) {
+    ifNeedResponed(JSON.parse(event.data as string))
+  })
+  // 启动 online.ts 中的 slate-irc 初始化
+  startIRC()
+  // 载入所有的插件
+  pluginsLoad()
+}
+
+/**
+ * 在程序关闭前执行处理
+ * 
+ * @remarks
+ * 目前仅通知所有插件进行后事处理
+ */
+export async function handleExit(exitCode? :number) :Promise<void> {
+  await pluginsUnload(process.exitCode)
+  process.exit(exitCode)
+}
 
 /**
  * 当接收到 go-cqhttp 任意内容时触发
@@ -67,7 +69,7 @@ startIRC()
 function ifNeedResponed(data :any) :void {
   // 判断是否为消息
   if (data.raw_message) {
-    const msg :msg = {
+    const msg :msg_types = {
       raw_text: data.raw_message as string,  //TODO: 当 cqhttp 的上报类型改为 array 后，message 字段会有更丰富的信息，后期可以考虑利用
       message_type: data.message_type as string,
       user_id: data.sender.user_id as number,
@@ -110,13 +112,13 @@ function ifNeedResponed(data :any) :void {
  * @param type - 消息的类型，admin：管理员命令；mp：mp房间命令；main：包含触发字符/的命令；other：其他不包含触发字符/的命令
  * 
  */
-function fetchResponse(msg: msg, text :string, type :'admin' | 'mp' | 'main' | 'other') :void {
+function fetchResponse(msg: msg_types, text :string, type :'admin' | 'mp' | 'main' | 'other') :void {
   const textArray: Array<string> = text.split(" ").filter(n => n.length > 0)
 
   // 封装一个方法，用于一些重复的操作
   const msgReply = (text :string) => {
     // 构建回复用主体
-    const res :msg_response = {
+    const res :msg_response_types = {
       message_type: msg.message_type,
       text: text,
       user_id: msg.user_id,
@@ -158,11 +160,10 @@ function fetchResponse(msg: msg, text :string, type :'admin' | 'mp' | 'main' | '
       // 走一些命令前不带 / 的特殊字符
       // 比如 “确认” “取消”  等被动命令（广播式传给所有需要该命令的功能）
       //TODO: 可能做早安&晚安&打胶统计器，即距离上一次早安&晚安&打胶距离了多长时间，可能要用持续化数据库
+      // 有了插件系统可以非常方便的加一些临时/复杂功能
       
-      //处理一下旧版本的命令
-      if (/^[Kk]reee[ ,，]/g.test(text)) {
-        msgReply("检测到旧版本的命令格式，请使用 “/help” 获取最新命令格式！")
-      }
+      // 传递消息给插件
+      pluginReceiveMsg(msg)
   }
 }
 
@@ -175,8 +176,8 @@ function fetchResponse(msg: msg, text :string, type :'admin' | 'mp' | 'main' | '
  * @param res - 回复消息的 object
  * 
  */
-function makeResponse(res :msg_response) :void {
-  const msg_params :msg_params = {
+export function makeResponse(res :msg_response_types) :void {
+  const msg_params :msg_params_types = {
     message: res.text,
     user_id: res.user_id,
     message_type: res.message_type,
@@ -184,12 +185,12 @@ function makeResponse(res :msg_response) :void {
   }
   // 如果 message_type 不是 group 或是 private，则输出错误并终止程序
   if (res.message_type !== 'group' && res.message_type !== 'private') {
-  log.fatal(`makeResponse: message_type is out of range: ${res.message_type}`)
+    log.fatal(`makeResponse: message_type is out of range: ${res.message_type}`)
   }
   // 构建发送给 go-cqhttp 的消息主体
   const msg_send :object = {
     "action": "send_msg" as string,
-    "params": msg_params as msg_params,
+    "params": msg_params as msg_params_types,
     "echo": `Response to ${msg_params.user_id}`
   }
   //通过 WebSocket 发送消息给 go-cqhttp
@@ -233,7 +234,7 @@ function handleCallback(data :any) :void {
  */
 export function adminNotify(msg :string) :void {
   for (const QQid of config.adminQQ) {
-    const msg_params :msg_params = {
+    const msg_params :msg_params_types = {
       message: `${msg}\n(for Admin) ${config.debug? "(Dev mode)":""}`,
       user_id: QQid,
       message_type: "private"
@@ -241,7 +242,7 @@ export function adminNotify(msg :string) :void {
     // 构建发送给 go-cqhttp 的消息主体
     const msg_send :object = {
       "action": "send_msg" as string,
-      "params": msg_params as msg_params,
+      "params": msg_params as msg_params_types,
       "echo": `Send to admin ${msg_params.user_id}`
     }
     //通过 WebSocket 发送消息给 go-cqhttp

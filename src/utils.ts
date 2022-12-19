@@ -1,5 +1,6 @@
-import { config } from "../botconfig"
-import { log } from "./logger"
+import { gokapiReply_types } from "./types.js"
+import config from "../botconfig.js"
+import { log } from "./logger.js"
 import { createCanvas } from "canvas"
 import axios from "axios"
 import FormData from "form-data"
@@ -77,15 +78,7 @@ export function getOsuToken() :Promise<string> {
  * @returns Promise<gokapiReply> ，返回值为 {@link gokapiReturn}
  * 
  */
-// 构建回复所要用的 object 类型
-interface gokapiReply {
-  url :string,
-  hotlinkUrl? :string,
-  expirDays :number,
-  allowedDownloads :number,
-  password? :string
-}
-export function uploadToGokapi(file :ArrayBuffer, filename :string, expiryDays :number, allowedDownloads :number, password? :string) :Promise<gokapiReply> {
+export function uploadToGokapi(file :ArrayBuffer, filename :string, expiryDays :number, allowedDownloads :number, password? :string) :Promise<gokapiReply_types> {
   return new Promise((resolve, reject) => {
     //构建 post 需要的主体
     const postForm :FormData = new FormData()
@@ -97,7 +90,7 @@ export function uploadToGokapi(file :ArrayBuffer, filename :string, expiryDays :
       headers: {'apikey': config.gokapiToken, 'Content-Type': 'multipart/form-data'},
     })
       .then(res => {
-        const reply :gokapiReply = {
+        const reply :gokapiReply_types = {
           url: `${res.data.Url}${res.data.FileInfo.Id}`,
           hotlinkUrl: res.data.FileInfo.HotlinkId? `${res.data.HotlinkUrl}${res.data.FileInfo.HotlinkId}`:undefined,
           expirDays: expiryDays,

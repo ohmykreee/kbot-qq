@@ -1,6 +1,5 @@
-import { exit } from 'process'
-import { config } from '../botconfig'
-import { adminNotify } from './app'
+import config from "../botconfig.js"
+import { adminNotify, handleExit } from "./app.js"
 
 // 用于存储以往的日志，以后改为文件读写操作
 const logHistory :Array<string> = []
@@ -95,7 +94,7 @@ function logError(text :string) :void {
   saveLog(reply)
   console.log(reply)
   setTimeout(() => {
-    exit(1)
+    handleExit(1)
   }, 5000)
 }
 

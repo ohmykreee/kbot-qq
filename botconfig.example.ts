@@ -1,5 +1,5 @@
 // 修改设置时，仅修改以下代码块！
-export const config :botconf = {
+const config :botconf = {
   debug: false,
   cqhttpUrl: "",
   cqhttpToken: "",
@@ -13,7 +13,7 @@ export const config :botconf = {
   osuIrcIntervalMax: 10,
   nitterUrl: "https://nitter.net/",
   maxLogHistory: 100,
-  osuClientId: ,
+  osuClientId: 114514,
   osuClientSecret: "",
   ahrCWD: "./osuahr"
 }
@@ -37,3 +37,4 @@ interface botconf {
   maxLogHistory :number
   ahrCWD :string
 }
+export default config

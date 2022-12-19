@@ -1,6 +1,7 @@
-import { exit } from "process"
-import { text2img } from "./utils"
-import { readLog } from "./logger"
+import config from "../botconfig.js"
+import { text2img } from "./utils.js"
+import { readLog } from "./logger.js"
+import { handleExit } from "./app.js"
 
 /**
  * 处理来自管理员的消息并直接回复
@@ -34,14 +35,14 @@ export function adminHandler(msg :Array<string>) :Promise<string> {
       case "restart":
         resolve(`请求成功，将在3秒后以异常状态关闭程序，并等待 daemon 重启程序...`)
         setTimeout(() => {
-          exit(2)
+          handleExit(2)
         }, 3000)
         break
   
       case "stop":
         resolve(`请求成功，将在3秒后关闭程序...`)
         setTimeout(() => {
-          exit()
+          handleExit(process.exitCode)
         }, 3000)
         break
   
@@ -61,6 +62,13 @@ export function adminHandler(msg :Array<string>) :Promise<string> {
             resolve(text2img(reply))
           })
         break
+
+        case "kill":
+          // 命令仅在开发模式下可用，测试退出时的清理机制是否正常执行
+          if (config.debug) {
+            handleExit(process.exitCode)
+          }
+          break
   
       default:
         resolve('命令错误，请使用命令“/kbot help”来获取所有可用命令！')

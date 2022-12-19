@@ -5,7 +5,7 @@
 
 # 如何部署
 0. 前提
-- Node `v16.16.0` 
+- Node `v18.12.1` 或更高
 - cqhttp 实例（开启了一个 ws 服务器）
 - osu! 账号（最好无人使用）
   - osu Bancho IRC 的账号与密码（[可在这里获取，需要账号拥有 100 次游玩记录](https://osu.ppy.sh/p/irc)）
@@ -26,7 +26,7 @@ cd kbot-qq
 npm install
 ```
 
-3. 复制一份 `botconfig.ts.example` 为 `botconfig.ts`，并修改相关设置
+3. 复制一份 `botconfig.example.ts` 为 `botconfig.ts`，并修改相关设置
 ```typescript
   debug: boolean  // 是否为开发环境，如是则会输出 Debug 日志与一些测试行为
   cqhttpUrl: string  // cqhttp 的连接地址
@@ -48,23 +48,23 @@ npm install
 这是一个修改好的 `botconfig.ts` 的例子:
 ```typescript
 // 修改设置时，仅修改以下代码块！
-export const config :botconf = {
+const config :botconf = {
   debug: false,
-  cqhttpUrl: "ws://localhost:1234",
-  cqhttpToken: "this_is_a_very_long_token_for_cqhttp",
+  cqhttpUrl: "",
+  cqhttpToken: "",
   adminQQ: [123456789, 987654321],
   description: "实用化，固定的命令与简单的触发关键字符。",
-  gokapiUrl: "https://gokapi.example.site/api/",
-  gokapiToken: "this_is_a_very_long_token_for_gokapi",
-  osuIrcUsername: "Kreee",
-  osuIrcPassword: "this_is_a_very_long_passwd_for_irc",
+  gokapiUrl: "",
+  gokapiToken: "",
+  osuIrcUsername: "",
+  osuIrcPassword: "",
   osuIrcIntervalMin: 5,
   osuIrcIntervalMax: 10,
-  nitterUrl: "https://nitter.example.site/",
+  nitterUrl: "https://nitter.net/",
   maxLogHistory: 100,
   osuClientId: 114514,
-  osuClientSecret: "this_is_a_very_long_secret_for_osu",
-  ahrCWD: "/usr/local/kbot-qq/osuahr"
+  osuClientSecret: "",
+  ahrCWD: "./osuahr"
 }
 
 // 以下内容请勿修改！
@@ -86,6 +86,7 @@ interface botconf {
   maxLogHistory :number
   ahrCWD :string
 }
+export default config
 ```
 
 4. 修改 osu-ahr 设置
@@ -140,7 +141,50 @@ npm run dev
 同时需要在 `botconfig.ts` 中启用 `debug: true,`
 
 # 插件系统
-正在开发中，敬请期待...
+仍在早期开发中，不保证稳定性。
+
+**注意:** 请仅安装来自可信来源的插件！恶意插件可能会造成不可挽回的损失！
+
+1. 初始化插件项目
+
+首先确保完成以上内容，能够在开发环境中成功运行 `kbot-qq`。
+```bash
+cd plugins
+mkdir my-plugin
+cd my-plugin
+npm init
+cp ../example-plugin/app.ts ./
+npx tsc --init
+```
+
+2. 安装依赖
+
+直接在插件的子目录处执行 `npm install --save [package]`，建议分发插件时附带上 `node_modules` 文件夹。   
+（如果选择精简分发文件，即不带上 `node_modules`，请务必带上 `package.json` 与 `package-lock.json`，并在部署前在插件子目录处执行一次 `npm install`）
+
+3. 编写插件
+
+**注意:** 请勿修改入口文件 `app.ts` 的文件名！
+
+修改 `app.ts` 完成开发。
+
+以下为开发时注意事项：
+- 导入第三方包时，会出现路径错误。可以尝试使用：
+```typescript
+import path from 'path'
+
+const mainDir = path.resolve()
+const { ChatGPTAPIBrowser } = await import(`file:///${mainDir}/plugins/chatgpt/node_modules/chatgpt/build/`)
+```
+- 请勿修改程序关键部分，可能会引发未知错误。
+- 如果需要主动发送消息，可以导入 `../../src/plugin` 中的 `pluginSendMsg()` 方法，传递值与 `PluginClass.receiver()` 方法返回值类型相同。
+
+4. 编译插件
+```bash
+cd ../../
+npm run build
+```
+将会同时编译 `kbot-qq` 主体与所有插件为 js 文件于 `dist` 文件夹中。分发时可选择分发 js 文件。
 
 # 常见问题
 1. `text2img()`无法正确渲染中文等字体

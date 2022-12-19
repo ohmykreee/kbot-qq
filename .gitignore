@@ -105,3 +105,7 @@ dist
 
 # config file
 botconfig.ts
+
+# plugins
+plugins/*
+!plugins/example-plugin/

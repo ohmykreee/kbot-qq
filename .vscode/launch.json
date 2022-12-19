@@ -12,7 +12,7 @@
         "<node_internals>/**"
       ],
       "cwd": "${workspaceRoot}",
-      "runtimeArgs": ["-r", "ts-node/register"],
+      "runtimeArgs": ["-r", "ts-node-esm/register"],
       "args": ["${workspaceRoot}/src/app.ts"],
       "envFile": "${workspaceFolder}/.env"
     }

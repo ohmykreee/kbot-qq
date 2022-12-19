@@ -1,23 +1,23 @@
 import IRC from "slate-irc"
 import net from "net"
-import { appStatus } from "./app"
-import { log } from "./logger"
-import { config } from "../botconfig"
-import { osuname } from "./list/osu"
+import { appStatus } from "./app.js"
+import { log } from "./logger.js"
+import config from "../botconfig.js"
+import { osuname } from "./list/osu.js"
 
 // 用于临时存储查询结果，判断是否查询完成，查询前后要清空一次
-interface stats {
+interface stats_types {
   count :number
   reply :string
 }
-const stats :stats = {
+const stats :stats_types = {
   count: 0,
   reply: '',
 }
 // 用于存储查询结果，当 handler.ts 请求查询时返回该值
 let statsResult :string = ''
 // 撞锁计数，如果多次撞锁则强制终止程序，等待 daemon 重启程序
-let isBusyCounter :number = 0
+// let isBusyCounter :number = 0
 // 用于定时查询间隔（分钟），为一一定范围内的随机整数值
 let timeout :number
 
@@ -170,7 +170,7 @@ function fetchMsg(msg :string) :void {
     stats.reply = ''
     // 解锁,清空撞锁计数
     appStatus.isQuery = false
-    isBusyCounter = 0
+    // isBusyCounter = 0
   }
 }
 

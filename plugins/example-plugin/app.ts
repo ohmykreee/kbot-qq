@@ -43,6 +43,7 @@ class PluginClass implements plugin_types {
         }
         resolve(reply)
       }
+      resolve()
     })
   }
 }

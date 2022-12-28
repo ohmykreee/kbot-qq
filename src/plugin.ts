@@ -23,6 +23,7 @@ class PluginManagerClass {
       for (let plugin of this._plugins) {
         await plugin.stop()
       }
+      this._plugins.splice(0, this._plugins.length)
       log.info(`PluginManager: unload all...`)
       resolve()
     })

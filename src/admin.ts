@@ -2,6 +2,7 @@ import config from "../botconfig.js"
 import { text2img } from "./utils.js"
 import { readLog } from "./logger.js"
 import { handleExit } from "./app.js"
+import { pluginsLoad, pluginsUnload } from "./plugin.js"
 
 /**
  * 处理来自管理员的消息并直接回复
@@ -14,7 +15,7 @@ import { handleExit } from "./app.js"
  * @returns Promise<string>，返回值为回复的字符串
  */
 export function adminHandler(msg :Array<string>) :Promise<string> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     let reply :string = ""
     switch (msg[1]) {
       case "help":
@@ -27,6 +28,7 @@ export function adminHandler(msg :Array<string>) :Promise<string> {
   /kbot help        输出该帮助信息\n
   /kbot restart     以异常状态停止程序并等待 daemon 重启程序\n
   /kbot stop        无退出码停止程序，如果程序此前有异常则会被 daemon 重启\n
+  /kbot reload      重新载入所有插件\n
   /kbot log [数字]   获取最近指定数目的日志
   `
         resolve(text2img(reply))
@@ -61,6 +63,12 @@ export function adminHandler(msg :Array<string>) :Promise<string> {
             })
             resolve(text2img(reply))
           })
+        break
+
+        case "reload":
+          await pluginsUnload()
+          await pluginsLoad()
+          resolve("成功重载所有的插件。")
         break
 
         case "kill":

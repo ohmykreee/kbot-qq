@@ -193,6 +193,7 @@ const mainDir = path.resolve()
 const { ChatGPTAPIBrowser } = await import(`file:///${mainDir}/plugins/chatgpt/node_modules/chatgpt/build/index.js`)
 ```
 - 请勿修改程序关键部分，可能会引发未知错误。
+- `stop()` 方法必须使用 `resolve()` 返回，否则程序在退出时会卡住。
 - 如果需要主动发送消息，可以导入 `../../src/plugin` 中的 `pluginSendMsg()` 方法，传递值与 `PluginClass.receiver()` 方法返回值类型相同。
 
 4. 编译插件

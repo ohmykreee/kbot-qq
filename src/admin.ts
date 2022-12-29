@@ -1,6 +1,6 @@
 import config from "../botconfig.js"
 import { text2img } from "./utils.js"
-import { log, readLog } from "./logger.js"
+import { log } from "./logger.js"
 import { handleExit } from "./app.js"
 import { pluginsLoad, pluginsUnload } from "./plugin.js"
 
@@ -56,7 +56,7 @@ export function adminHandler(msg :Array<string>) :Promise<string> {
         } else {
           count = parseInt(msg[2])
         }
-        readLog(count)
+        log.readLog(count)
           .then((logs) => {
             logs.map((log) => {
               reply = reply + `${log}\n`

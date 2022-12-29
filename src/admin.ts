@@ -1,6 +1,6 @@
 import config from "../botconfig.js"
 import { text2img } from "./utils.js"
-import { readLog } from "./logger.js"
+import { log, readLog } from "./logger.js"
 import { handleExit } from "./app.js"
 import { pluginsLoad, pluginsUnload } from "./plugin.js"
 
@@ -15,7 +15,7 @@ import { pluginsLoad, pluginsUnload } from "./plugin.js"
  * @returns Promise<string>，返回值为回复的字符串
  */
 export function adminHandler(msg :Array<string>) :Promise<string> {
-  return new Promise(async (resolve, reject) => {
+  return new Promise(async (resolve) => {
     let reply :string = ""
     switch (msg[1]) {
       case "help":
@@ -62,6 +62,9 @@ export function adminHandler(msg :Array<string>) :Promise<string> {
               reply = reply + `${log}\n`
             })
             resolve(text2img(reply))
+          })
+          .catch((error) => {
+            log.error(`readLog: ${error.toString()}`)
           })
         break
 

@@ -15,10 +15,10 @@ export const appStatus :appStatus_types = {
 
 // 初始化 WebSocket，并先传入关闭与错误事件
 const client = new WebSocket(`${config.cqhttpUrl}${config.cqhttpToken? `?access_token=${config.cqhttpToken}`:undefined}`)
-client.addEventListener('error', function(event) {
+client.addEventListener('error', (event) => {
   log.error(`websocket error: ${event.error}`)
 })
-client.addEventListener('close' ,function(event) {
+client.addEventListener('close', (event) => {
   log.fatal(`connection closed: ${event.reason}`)
 })
 // TODO: 在数据库准备好后执行接下来的任务
@@ -37,7 +37,7 @@ process.on('SIGUSR2', () => {process.stdin.resume(); handleExit(process.exitCode
  * 目前仅在数据库载入数据完成后执行
  */
 function handleStart() :void {
-  client.addEventListener('message', function (event) {
+  client.addEventListener('message', (event) => {
     ifNeedResponed(JSON.parse(event.data as string))
   })
   // 启动 online.ts 中的 slate-irc 初始化

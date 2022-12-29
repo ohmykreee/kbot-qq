@@ -43,7 +43,7 @@ export function startIRC() :void {
   client.pass(config.osuIrcPassword)
   client.nick(config.osuIrcUsername)
   // 传入事件触发函数，且仅接受来自 BanchoBot 的消息
-  client.on('message', function(msg) {
+  client.on('message',(msg) => {
     if (msg.from === 'BanchoBot') {
       fetchMsg(msg.message)
     }

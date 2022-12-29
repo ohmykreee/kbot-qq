@@ -88,7 +88,7 @@ function logError(text :string) :void {
  * @param text - 日志需要输出的字符串
  * 
  */
- function logFatal(text :string) :void {
+function logFatal(text :string) :void {
   const reply :string = `${getDateString()} [FATAL]: ${text}`
   adminNotify(reply)
   saveLog(reply)

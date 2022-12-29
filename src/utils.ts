@@ -56,7 +56,7 @@ export function getOsuToken() :Promise<string> {
       .then(res => {
         resolve(res.data.access_token)
       })
-      .catch(function (error) {
+      .catch((error) => {
         log.error(`osu-get-token: ${error.toString()}`)
         reject(error)
       })
@@ -99,7 +99,7 @@ export function uploadToGokapi(file :ArrayBuffer, filename :string, expiryDays :
         }
         resolve(reply)
       })
-      .catch(function (error) {
+      .catch((error) => {
         log.error(`gokapi: ${error.toString()}`)
         reject(error)
       })

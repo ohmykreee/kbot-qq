@@ -158,12 +158,12 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
             }
             resolve(reply)
           })
-          .catch(function (error) {
+          .catch((error) => {
             if (error.response && error.response.status === 404) {
               resolve(`未找到该账户：@ ${twitterId}`)
             } else {
               log.error(`fetchTweets: ${error.toString()}`)
-              reject(error)
+              resolve("发生非致命错误，已上报给管理员。")
             }
           })
           break
@@ -173,9 +173,9 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
             .then(res => {
               resolve(`[CQ:image,file=${res.request.protocol}//${res.request.host}${res.request.path}]`)
             })
-            .catch(function (error) {
+            .catch((error) => {
               log.error(`fetchRandomImg: ${error.toString()}`)
-              reject(error)
+              resolve("发生非致命错误，已上报给管理员。")
             })
           break
 
@@ -216,6 +216,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
         }
         // 获取token
         const token :string | void = await getOsuToken()
+        if (!token) { resolve("发生非致命错误，已上报给管理员。") }
         axios.get(`https://osu.ppy.sh/api/v2/users/${user}`, {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -268,17 +269,17 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
                   resolve(`${user} 最近还没有打过图哦...`)
                 }
               })
-              .catch(function (error) {
+              .catch((error) => {
                 log.error(`osu-score: when get user-score: ${error.toString()}`)
-                reject(error)
+                resolve("发生非致命错误，已上报给管理员。")
               })
             })
-            .catch(function (error) {
+            .catch((error) => {
               if (error.response && error.response.status === 404) {
                 resolve(text2img(`未找到该账户：${user}`))
               } else {
                 log.error(`osu-score: when get user-id: ${error.toString()}`)
-                reject(error)
+                resolve("发生非致命错误，已上报给管理员。")
               }
             })
       break
@@ -300,19 +301,24 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
               .then(async res => {
                 // 随机一个文件名
                 const fileName :string = `kbot-${qqid}-${randomBytes(5).toString('hex')}.${res.headers["content-type"].split("/")[1]}`
-                const gokapiResult = await uploadToGokapi(res.data, fileName, 7, 0)
-                  if (gokapiResult.hotlinkUrl) {
-                    reply = `上传成功！\n链接： ${gokapiResult.hotlinkUrl}\n有效期：${gokapiResult.expirDays} 天`
-                    resolve(reply)
-                  } else {
-                    reply = "出现未知错误：未获取到直链。请通知管理员！"
-                    log.error("imgUpload: can't get gokapi.HotlinkUrl")
-                    resolve(reply)
-                  }
+                uploadToGokapi(res.data, fileName, 7, 0)
+                  .then((gokapiResult) => {
+                    if (gokapiResult.hotlinkUrl) {
+                      reply = `上传成功！\n链接： ${gokapiResult.hotlinkUrl}\n有效期：${gokapiResult.expirDays} 天`
+                      resolve(reply)
+                    } else {
+                      reply = "出现未知错误：未获取到直链。请通知管理员！"
+                      log.error("imgUpload: can't get gokapi.HotlinkUrl")
+                      resolve(reply)
+                    }
+                  })
+                  .catch(() => {
+                    resolve("发生非致命错误，已上报给管理员。")
+                  })
               })
-              .catch(function (error) {
+              .catch((error) => {
                 log.error(`uploadGokapi: ${error.toString()}`)
-                reject(error)
+                resolve("发生非致命错误，已上报给管理员。")
               })
           }
         }

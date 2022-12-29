@@ -70,7 +70,7 @@ function startOsuAhr() :Promise<void> {
  * 
  */
  export function mpHandler(msg :Array<string>) :Promise<string> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     switch(msg[1]) {
       case "help":
       case "h":

@@ -41,7 +41,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
   /在线 更新                           立即请求一次 osu! 在线列表的更新\n
   /吃什么                              不知道今天中午/晚上吃什么？问我！\n
   /星期四                              星期四？想什么呢！\n
-  /抽一张                              从盲盒里抽一张，0.05% / 4000井有神秘奖励？\n
+  /抽一张                              从 Mono 精选里抽一张（无涩涩），赞美 Mono！\n
   /推 [推特ID]                         返回最新的一条推文（且用且珍惜）\n
   /推图 [推特ID]                       返回最新的一条带图片推文（且用且珍惜）\n
   /img [图片]                          上传图片并生成链接（记得/img后面要加空格）\n
@@ -169,9 +169,9 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
           break
 
       case "抽一张":
-          axios.get("https://iw233.cn/API/Random.php")
+          axios.get("https://desu.life/random_image?type=json")
             .then(res => {
-              resolve(`[CQ:image,file=${res.request.protocol}//${res.request.host}${res.request.path}]`)
+              resolve(`[CQ:image,file=${res.data.url}]\n（来源：${res.data.source}）`)
             })
             .catch((error) => {
               log.error(`fetchRandomImg: ${error.toString()}`)

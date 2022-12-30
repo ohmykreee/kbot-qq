@@ -5,57 +5,81 @@ import { log } from "./logger.js"
 import { stopIRC, startIRC } from "./online.js"
 import config from "../botconfig.js"
 
-// 存储房间名称
-let roomName :string
-// 是否在等待关闭
-let waitClose :boolean = false
+const osuahr :osuahr_types[] = []
 
-// 创建接口（灵感来源自：https://stackoverflow.com/questions/54185655/how-do-you-create-a-terminal-instance-within-a-nodejs-child-process）
 interface osuahr_types {
-  terminal: child_process.ChildProcessWithoutNullStreams
-  send: (data :string) => void
+  roomName :string
+  isWaitClose :boolean
+  start() :Promise<void>
+  send(data :string) :void
 }
-let osuahr :osuahr_types
 
-/**
- * 初始化并启动 osu-ahr
- * 
- * @returns Promise<void>，初始化 osu-ahr 后延时 3s 调用
- * 
- */
-function startOsuAhr() :Promise<void> {
-  return new Promise((resolve, reject) => {
-    osuahr = {
-      terminal: child_process.spawn(process.execPath, ['./dist/cli/index.js'], { cwd: config.ahrCWD }),
-      send: (data: string) => {
-        osuahr.terminal.stdin.write(data + '\n')
-      }
-    }
-  
-    // 因为不可控因素过多，不存运行时产生的正常日志于 logger 中
-    // 处理来自 osuahr 的输出内容
-    osuahr.terminal.stdout.on('data', (buffer :any) => {
-      console.log(`osu-ahr: ${buffer.toString()}`)
-    })
-    // 处理来自 osuahr 的错误信息
-    osuahr.terminal.stderr.on('data', (buffer :any) => {
-      log.error(`osu-ahr: ${buffer.toString()}`)
-    })
-    // 处理来自 osuahr 的关闭事件
-    osuahr.terminal.on('close', () => {
-      log.info(`osu-ahr: closed`)
-      appStatus.isMP = false
-      roomName = ""
-      waitClose = false
+class osuahrClass implements osuahr_types {
+  constructor(roomName :string) {
+    this.roomName = roomName
+    this.start = this.start
+    this.send = this.send
+    this.isWaitClose = false
+  }
+
+  roomName: string
+  isWaitClose :boolean
+
+  private _terminal :child_process.ChildProcessWithoutNullStreams[] = []
+
+  /**
+   * 初始化并启动 osu-ahr
+   * 
+   * @returns Promise<void>，初始化 osu-ahr 后延时 3s 返回
+   * 
+   */
+  start() :Promise<void> {
+    return new Promise((resolve, reject) => {   
+      this._terminal.push(child_process.spawn(process.execPath, ['./dist/cli/index.js'], { cwd: config.ahrCWD }))
+      // 因为不可控因素过多，不存运行时产生的正常日志于 logger 中
+      // 处理来自 osuahr 的输出内容
+      this._terminal[0].stdout.on('data', (buffer :any) => {
+        console.log(`osu-ahr: ${buffer.toString()}`)
+      })
+      // 处理来自 osuahr 的错误信息
+      this._terminal[0].stderr.on('data', (buffer :any) => {
+        log.error(`osu-ahr: ${buffer.toString()}`)
+      })
+      // 处理来自 osuahr 的关闭事件
+      this._terminal[0].on('close', () => {
+        this._stop()
+      })
       setTimeout(() => {
-        startIRC()
+        resolve()
       }, 3000)
     })
-    // 调用回调函数，进行接下来的操作
-    setTimeout(() => {
-      resolve()
+  }
+
+  /**
+   * 停止 osu-ahr
+   * 
+   * @private
+   * 
+   */
+  private _stop() :void {
+    log.info(`osu-ahr: closed`)
+    appStatus.isMP = false
+    this.roomName = ""
+    this.isWaitClose = false
+    setTimeout(async () => {
+      await startIRC()
     }, 3000)
-  })
+    osuahr.splice(0, osuahr.length)
+  }
+
+  /**
+   * 发送命令给 osu-ahr
+   * 
+   */
+  send(data :string) :void {
+    this._terminal[0].stdin.write(data + '\n')
+  }
+
 }
 
 /**
@@ -70,7 +94,7 @@ function startOsuAhr() :Promise<void> {
  * 
  */
  export function mpHandler(msg :Array<string>) :Promise<string> {
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
     switch(msg[1]) {
       case "help":
       case "h":
@@ -105,7 +129,7 @@ function startOsuAhr() :Promise<void> {
         break
   
       case "status":
-        const status :string =`是否正在主持多人游戏：${appStatus.isMP? "是":"否"}\n${appStatus.isMP? `房间名：${roomName}`:""}`
+        const status :string =`是否正在主持多人游戏：${appStatus.isMP? "是":"否"}\n${appStatus.isMP? `房间名：${osuahr[0].roomName}`:""}`
         resolve(text2img(status))
         break
   
@@ -117,25 +141,28 @@ function startOsuAhr() :Promise<void> {
             return
           }
           appStatus.isMP = true
-          stopIRC()
-          roomName = room
-          resolve(text2img(`注意：主持多人游戏期间查询在线功能将暂停！\n5s 后开始创建房间并主持：${roomName}`))
+          await stopIRC()
+          osuahr.push(new osuahrClass(room))
+          resolve(text2img(`注意：主持多人游戏期间查询在线功能将暂停！\n5s 后开始创建房间并主持：${osuahr[0].roomName}`))
           setTimeout(() => {
-            startOsuAhr().then(() => { osuahr.send(`make ${room}` )})
-            log.info(`osu-ahr: make room: ${roomName}`)
+            osuahr[0].start()
+              .then(() => {
+                osuahr[0].send(`make ${room}`)
+              })
+            log.info(`osu-ahr: make room: ${osuahr[0].roomName}`)
           }, 2000)
         } else {
-          resolve(text2img(`创建失败：\n正在主持多人游戏，房间名：${roomName}`))
+          resolve(text2img(`创建失败：\n正在主持多人游戏，房间名：${osuahr[0].roomName}`))
         }
         break
   
       case "close":
         if (appStatus.isMP) {
-          if (!waitClose) {
-            osuahr.send(`close`)
+          if (!osuahr[0].isWaitClose) {
+            osuahr[0].send(`close`)
             resolve("请求关闭房间成功，等待所有人退出房间...")
-            log.info(`osu-ahr: close room ${roomName}`)
-            waitClose = true
+            log.info(`osu-ahr: close room ${osuahr[0].roomName}`)
+            osuahr[0].isWaitClose = true
           } else {
             resolve("已经请求过关闭房间，正在等待所有人退出房间...")
           }
@@ -151,7 +178,7 @@ function startOsuAhr() :Promise<void> {
             resolve('请输入有效的命令！')
             return
           }
-          osuahr.send(command)
+          osuahr[0].send(command)
           resolve(text2img(`尝试执行命令：${command}`))
         } else {
           resolve("未开始主持多人游戏，请使用“/mp make [房间名]”来创建房间！")
@@ -164,18 +191,18 @@ function startOsuAhr() :Promise<void> {
         if (config.debug) {
           if (msg[1] === "start") {
             appStatus.isMP = true
-            stopIRC()
+            await stopIRC()
             log.debug("osu-ahr: stop online-query IRC")
-            roomName = "*以 Debug 方式启动*"
+            osuahr.push(new osuahrClass("*以 Debug 方式启动*"))
             setTimeout(() => {
-              startOsuAhr()
+              osuahr[0].start()
                 .then(() => {
-                  osuahr.send("help")
+                  osuahr[0].send("help")
                   log.debug("osu-ahr: start osu-ahr")
                 })
             }, 2000)
           } else {
-            osuahr.send(`quit`)
+            osuahr[0].send(`quit`)
           }
           return
         }

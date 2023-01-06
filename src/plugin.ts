@@ -10,7 +10,7 @@ class PluginManagerClass {
 
   load(path: string): Promise<void> {
     return new Promise(async (resolve) => {
-      const { default: plugin } = await import(path)
+      const { default: plugin } = await import(`${path}?update=${Date.now()}`)  // 会产生内存泄漏
       plugin.start()
       this._plugins.push(plugin)
       log.info(`PluginManager: load: ${plugin.name}, version: ${plugin.version}`)

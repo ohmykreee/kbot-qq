@@ -55,6 +55,7 @@ class DbManagerClass implements dbManager_types {
         db.data ||= [] // 如果文件为空赋予一个初始结构
         this._db.push(db)
       }
+      this._writeTimer()
       resolve()
     })
   }

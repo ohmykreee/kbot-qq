@@ -88,10 +88,10 @@ export function adminHandler(msg :Array<string>) :Promise<string> {
           if (["osu", "food", "vw50"].includes(dbName)) {
             if (msg[1] === "dbadd" && value) {
               await db.push(dbName, value)
-              resolve(`已在数据库 ${dbName} 中添加 ${value}`)
+              resolve(text2img(`已在数据库 ${dbName} 中添加 ${value}`))
             } else if(msg[1] === "dbrm"  && value){
               await db.rm(dbName, value)
-              resolve(`已在数据库 ${dbName} 中删除 ${value}`)
+              resolve(text2img(`已在数据库 ${dbName} 中删除 ${value}`))
             } else {
               const data = await db.read(dbName)
               let reply :string = `${dbName}\n------\n`

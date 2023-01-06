@@ -3,6 +3,7 @@ import { text2img } from "./utils.js"
 import { log } from "./logger.js"
 import { handleExit } from "./app.js"
 import { pluginsLoad, pluginsUnload } from "./plugin.js"
+import db from "./db.js"
 
 /**
  * 处理来自管理员的消息并直接回复
@@ -25,11 +26,13 @@ export function adminHandler(msg :Array<string>) :Promise<string> {
   `
   狗勾机器人(Kreee bot)管理员命令：
   （仅支持管理员私聊机器人时触发）\n
-  /kbot help        输出该帮助信息\n
-  /kbot restart     以异常状态停止程序并等待 daemon 重启程序\n
-  /kbot stop        无退出码停止程序，如果程序此前有异常则会被 daemon 重启\n
-  /kbot reload      临时重载所有插件\n
-  /kbot log [数字]   获取最近指定数目的日志
+  /kbot help                                输出该帮助信息\n
+  /kbot restart                             以异常状态停止程序并等待 daemon 重启程序\n
+  /kbot stop                                无退出码停止程序，如果程序此前有异常则会被 daemon 重启\n
+  /kbot reload                              临时重载所有插件\n
+  /kbot log [数字]                          获取最近指定数目的日志\n
+  /kbot dbadd/dbrm [数据库名] [字符串]       数据库增减操作\n
+  /kbot dblist [数据库名]                    返回该数据库的所有内容
   `
         resolve(text2img(reply))
         break
@@ -73,6 +76,32 @@ export function adminHandler(msg :Array<string>) :Promise<string> {
           await pluginsLoad()
           resolve("已临时重载所有的插件。\n注意：该方法存在内存泄漏，需要稍后重启整个程序以解决！")
         break
+
+        case "dbadd":
+        case "dbrm":
+        case "dblist":
+          const dbName :"osu" | "food" | "vw50" = msg[2] as "osu" | "food" | "vw50"
+          let value :string = msg.slice(3).join(" ")
+          // 处理 osu 用户名中的俩特殊字符
+          value = value.replace(/&#91;/i, '[')
+          value = value.replace(/&#93;/i, ']')
+          if (["osu", "food", "vw50"].includes(dbName)) {
+            if (msg[1] === "dbadd" && value) {
+              await db.push(dbName, value)
+              resolve(`已在数据库 ${dbName} 中添加 ${value}`)
+            } else if(msg[1] === "dbrm"  && value){
+              await db.rm(dbName, value)
+              resolve(`已在数据库 ${dbName} 中删除 ${value}`)
+            } else {
+              const data = await db.read(dbName)
+              let reply :string = `${dbName}\n------\n`
+              data.map((e) => reply = `${reply}${e}\n`)
+              resolve(text2img(reply))
+            }
+          } else {
+            resolve("错误：不正确的数据库名（osu、food、vw50）！")
+          }
+          break
 
         case "kill":
           // 命令仅在开发模式下可用，测试退出时的清理机制是否正常执行

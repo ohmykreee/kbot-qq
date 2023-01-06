@@ -53,7 +53,7 @@ export async function pluginsLoad() :Promise<void> {
   pluginList
     .filter(dirent => dirent.isDirectory())
     .map(dirent => dirent.name)
-  for (let plugin of pluginList) {
+  for (const plugin of pluginList) {
     // 判断是否存在 app.js/app.ts
     const pluginFiles = await fs.readdir(`${mainDir}/plugins/${plugin.name}`)
     if (pluginFiles.includes("app.js") || pluginFiles.includes("app.ts")) {

@@ -2,9 +2,7 @@ import axios from "axios"
 import config from "../botconfig.js"
 import { log } from "./logger.js"
 import { JSDOM } from "jsdom"
-import { vw50 } from "./list/kfc-vw50.js"
-import { food } from "./list/food.js"
-import { osuname } from "./list/osu.js"
+import db from "./db.js"
 import info from '../package.json' assert { type: "json" }
 import { getOSUStats, updateOSUStats } from "./online.js"
 import { text2img, getOsuToken, uploadToGokapi } from "./utils.js"
@@ -38,6 +36,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
   /关于                                关于这个机器人的一切\n
   /在线                                返回 osu! 查询列表里在线玩家\n
   /在线 列表                           返回 osu! 在线查询列表里的所有人\n
+  /在线 添加                           添加一项至 osu! 在线查询列表\n
   /在线 更新                           立即请求一次 osu! 在线列表的更新\n
   /吃什么                              不知道今天中午/晚上吃什么？问我！\n
   /星期四                              星期四？想什么呢！\n
@@ -67,6 +66,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
         switch (msg[1]) {
           case "列表":
             reply = "查询列表（排名不分先后）\n"
+            const osuname = await db.read("osu")
             osuname.map((name) => {
               reply = reply + `${name}\n`
             })
@@ -85,6 +85,45 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
               })
             break
 
+          case "添加":
+            let user :string = msg.slice(2).join(" ")
+            user = user.replace(/&#91;/i, '[')
+            user = user.replace(/&#93;/i, ']')
+            // 检查名字是否格式正确
+            if (!user || !user.match(/^[A-Za-z0-9 \[\]_-]+$/)) {
+              resolve('请输入有效的用户名！')
+            }
+            // 在线查询用户名是否存在
+            const token :string | void = await getOsuToken()
+            if (!token) { resolve("发生非致命错误，已上报给管理员。") }
+            axios.get(`https://osu.ppy.sh/api/v2/users/${user}`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            })
+              .then(async (res) => {
+                const username :string = res.data.username
+                const currList = await db.read("osu")
+                if (username && !currList.includes(username)) {
+                  await db.push("osu", username)
+                  resolve(`成功添加玩家：${username}`)
+                } else if (currList.includes(username)) {
+                  resolve(`查询列表中已经存在玩家：${username}`)
+                } else {
+                  log.error(`add-queryer: when get user: empty username`)
+                  resolve("发生非致命错误，已上报给管理员。")
+                }
+              })
+              .catch((error) => {
+                if (error.response && error.response.status === 404) {
+                  resolve(text2img(`未找到该玩家：${user}`))
+                } else {
+                  log.error(`add-queryer: when get user-id: ${error.toString()}`)
+                  resolve("发生非致命错误，已上报给管理员。")
+                }
+              })
+            break
+
           default:
             // 运行 online.ts 中的 getOSUStats() 获取回复消息内容
             getOSUStats()
@@ -99,20 +138,17 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
 
       case "吃什么":
         // 随机选取 list/food.ts 中的一项回复
+        const food = await db.read("food")
         reply = food[Math.floor(Math.random() * food.length)]
         resolve(reply)
         break
 
       case "星期四":
         let today :number = new Date().getDay()
+        const vw50 = await db.read("vw50")
         // 判断今天是否为星期四，如是则随机选取 list/kfc-vw50.ts 中的一项回复
         if (today === 4) {
-          // 一个彩蛋，如果是 4133chen 的话只回复 “v我50”
-          if (qqid === 2428813374) {
-            reply = "v我50"
-          } else {
-            reply = vw50[Math.floor(Math.random() * vw50.length)]
-          }
+          reply = vw50[Math.floor(Math.random() * vw50.length)]
           resolve(reply)
         } else {
           reply = '反正不是星期四'
@@ -127,7 +163,6 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
         // 判断推特ID是否存在
         if (!twitterId || !twitterId.match(/^[A-Za-z0-9_]+$/)) {
           resolve("请输入有效的ID！")
-          return
         }
         axios.get(twitterUrl)
           .then(res => {
@@ -207,12 +242,11 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
         }
         // 获取用户id，以及替换两个奇葩字符 []
         let user :string = queryMode? msg.slice(1, -1).join(" "):msg.slice(1).join(" ")
-        user = user.replace(/&#91;/i, '[');
-        user = user.replace(/&#93;/i, ']');
+        user = user.replace(/&#91;/i, '[')
+        user = user.replace(/&#93;/i, ']')
         // 判断是否存在用户名
         if (!user || !user.match(/^[A-Za-z0-9 \[\]_-]+$/)) {
           resolve('请输入有效的用户名！')
-          return
         }
         // 获取token
         const token :string | void = await getOsuToken()

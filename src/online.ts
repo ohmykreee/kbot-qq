@@ -3,7 +3,7 @@ import net from "net"
 import { appStatus } from "./app.js"
 import { log } from "./logger.js"
 import config from "../botconfig.js"
-import { osuname } from "./list/osu.js"
+import db from "./db.js"
 
 const queryer :OnlineQuery_types[] = []
 
@@ -26,6 +26,7 @@ class OnlineQueryClass implements OnlineQuery_types {
 
   private _client :IRC.Client[] = []
 
+  private _osuLength :number = 0
   private _counter :number = 0
   private _reply :string = ""
   private _busyCounter :number = 0
@@ -104,12 +105,12 @@ class OnlineQueryClass implements OnlineQuery_types {
     // console.log(`from BanchoBot: ${msg}`)
 
     // 判断是否完成查询
-    if (this._counter > (osuname.length - 1)) {
+    if (this._osuLength !== 0 && this._counter > (this._osuLength - 1)) {
       // 输出查询结束日志
       log.debug(`getOSUStats: end of querying ${this._counter} players`)
       const now = new Date() // 用于输出查询时时间，和判断是否需要使用“卷王”称号
       // 将最终查询结果转存入查询结果变量中
-      this.results = `${now.getHours() > 22 || now.getHours() < 4 ? '卷王列表':'在线列表'}（更新时间 ${now.getMonth()}月${now.getDate()}日 ${now.getHours().toLocaleString('en-US',{minimumIntegerDigits: 2})}:${now.getMinutes().toLocaleString('en-US',{minimumIntegerDigits: 2})}）：${this._reply}\n-----`
+      this.results = `${now.getHours() > 22 || now.getHours() < 4 ? '卷王列表':'在线列表'}（更新时间 ${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours().toLocaleString('en-US',{minimumIntegerDigits: 2})}:${now.getMinutes().toLocaleString('en-US',{minimumIntegerDigits: 2})}）：${this._reply}\n-----`
       // 清空临时查询变量内内容
       this._counter = 0
       this._reply = ""
@@ -127,6 +128,8 @@ class OnlineQueryClass implements OnlineQuery_types {
    *
    */
   async update(): Promise<void> {
+    const osuname = await db.read("osu")
+    this._osuLength = osuname.length
     // 判断是否有锁
     if (!appStatus.isQuery && !appStatus.isMP) {
       // 输出开始查询的日志
@@ -166,7 +169,7 @@ class OnlineQueryClass implements OnlineQuery_types {
       this.update()
       this._timeout = Math.floor(Math.random() * (config.osuIrcIntervalMax - config.osuIrcIntervalMin + 1) + config.osuIrcIntervalMin)
       this._timer() // 重复调用自身，形成循环
-    }, this._timeout * 60000);
+    }, this._timeout * 60000)
   }
 }
 

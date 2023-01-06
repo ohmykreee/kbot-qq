@@ -1,5 +1,6 @@
 import { msg_types, msg_response_types, msg_params_types, appStatus_types } from "./types.js"
 import config from "../botconfig.js"
+import db from "./db.js"
 import { WebSocket } from "ws"
 import { msgHandler } from "./handler.js"
 import { adminHandler } from "./admin.js"
@@ -21,8 +22,15 @@ client.addEventListener('error', (event) => {
 client.addEventListener('close', (event) => {
   log.fatal(`connection closed: ${event.reason}`)
 })
-// TODO: 在数据库准备好后执行接下来的任务
-handleStart()
+// 在数据库准备好后执行接下来的任务
+db.init()
+  .then(() => {
+    handleStart()
+  })
+  .catch((error) => {
+    console.log(error.toString())
+  })
+
 // 在程序出现 kill/未知异常 时调用 handleExit() 
 // TODO: 需要更多的测试确保稳定性
 process.on('SIGINT', () => {process.stdin.resume(); handleExit(process.exitCode)})
@@ -50,10 +58,11 @@ function handleStart() :void {
  * 在程序关闭前执行处理
  * 
  * @remarks
- * 目前仅通知所有插件进行后事处理
+ * 插件后事处理，以及保存所有数据库更改
  */
 export async function handleExit(exitCode? :number) :Promise<void> {
   await pluginsUnload(process.exitCode)
+  await db.unload()
   process.exit(exitCode)
 }
 

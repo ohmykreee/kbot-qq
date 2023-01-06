@@ -109,3 +109,6 @@ botconfig.ts
 # plugins
 plugins/*
 !plugins/example-plugin/
+
+# db folder of k-bot
+botdb

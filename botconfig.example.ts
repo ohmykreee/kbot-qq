@@ -15,7 +15,8 @@ const config :botconf = {
   maxLogHistory: 100,
   osuClientId: 114514,
   osuClientSecret: "this_is_a_very_long_secret_for_osu",
-  ahrCWD: "/usr/local/kbot-qq/osuahr"
+  ahrCWD: "/usr/local/kbot-qq/osuahr",
+  dbCWD: "/usr/local/kbot-qq/botdb"
 }
 
 // 以下内容请勿修改！
@@ -36,5 +37,6 @@ interface botconf {
   nitterUrl :string
   maxLogHistory :number
   ahrCWD :string
+  dbCWD :string
 }
 export default config

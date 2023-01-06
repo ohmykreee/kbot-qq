@@ -1,9 +1,9 @@
 {
   "name": "kbot-qq",
-  "version": "2.4.2",
+  "version": "2.5.0",
   "description": "A Kreee's QQ bot written with TypeScript.",
   "type": "module",
-  "main": "src/app.ts",
+  "exports": "./src/app.js",
   "scripts": {
     "dev": "npx ts-node src/app.ts",
     "build": "npx tsc",
@@ -34,6 +34,7 @@
     "form-data": "^4.0.0",
     "install": "^0.13.0",
     "jsdom": "^20.0.0",
+    "lowdb": "^4.0.1",
     "nodemon": "^2.0.19",
     "npm": "^8.15.1",
     "slate-irc": "^0.9.1",

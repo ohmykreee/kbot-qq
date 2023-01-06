@@ -44,6 +44,7 @@ npm install
   nitterUrl :string  // nitter 实例的链接
   maxLogHistory :number  // 最大保存的日志项数
   ahrCWD :string  // osu-ahr 的目录（最好为绝对目录）
+  dbCWD :string // bot 数据库存储的目录（最好为绝对目录）
 ```
 这是一个修改好的 `botconfig.ts` 的例子:
 ```typescript
@@ -64,7 +65,8 @@ const config :botconf = {
   maxLogHistory: 100,
   osuClientId: 114514,
   osuClientSecret: "this_is_a_very_long_secret_for_osu",
-  ahrCWD: "/usr/local/kbot-qq/osuahr"
+  ahrCWD: "/usr/local/kbot-qq/osuahr",
+  dbCWD: "/usr/local/kbot-qq/botdb"
 }
 
 // 以下内容请勿修改！
@@ -85,6 +87,7 @@ interface botconf {
   nitterUrl :string
   maxLogHistory :number
   ahrCWD :string
+  dbCWD :string
 }
 export default config
 ```

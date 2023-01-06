@@ -15,7 +15,7 @@ import { randomBytes } from "crypto"
  * 接受接收的消息的字符串，当该消息命中某种规则时，返回回复消息字符串
  *
  * @param msg - 接收消息的字符数组
- * @param qqid - 触发者的 QQ 号，起因是为了某位群主量身定制
+ * @param qqid - 触发者的 QQ 号
  * 
  * @returns Promise<string>，返回值为回复内容或文字错误信息
  * 

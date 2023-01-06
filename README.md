@@ -11,7 +11,7 @@
   - osu Bancho IRC 的账号与密码（[可在这里获取，需要账号拥有 100 次游玩记录](https://osu.ppy.sh/p/irc)）
   - osu!api 的客户端 ID 与 token（[可在这里获取](https://osu.ppy.sh/home/account/edit#new-oauth-application)）
 - gokapi 实例（[项目地址](https://github.com/Forceu/Gokapi)）
-- 一个 nitter 实例（[可在这里找一个](https://github.com/zedeus/nitter/wiki/Instances)）
+- nitter 实例（[可在这里找一个](https://github.com/zedeus/nitter/wiki/Instances)）
 - 较好的网络环境（能够顺畅访问 osu!、nitter以及一些国内服务）
 
 
@@ -226,3 +226,6 @@ sudo apt install fonts-arphic-ukai fonts-arphic-uming fonts-ipafont-mincho fonts
 sudo apt install ttf-ancient-fonts
 ```
 其他系统可以参考：[Any emoji support? - node-canvas](https://github.com/Automattic/node-canvas/issues/760)
+
+
+~~屎山代码预警~~

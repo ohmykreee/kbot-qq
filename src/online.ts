@@ -51,8 +51,8 @@ class OnlineQueryClass implements OnlineQuery_types {
           this._receiver(msg.message)
         }
       })
-      // 开始第一次查询
-      this.update()
+      // 开始第一次查询（30s延时）
+      setTimeout(() => { this.update() }, 0.5 * 60000)
       // 若是程序第一次运行，开始运行定时查询
       this._timerObj = this._timer()
       resolve()
@@ -101,7 +101,7 @@ class OnlineQueryClass implements OnlineQuery_types {
     }
 
     // 如果在开发模式下，输出所有来自 BanchoBot 的消息至日志，因为输出内容过于多所以注释禁用
-    // log.debug(`from BanchoBot: ${msg}`)
+    // console.log(`from BanchoBot: ${msg}`)
 
     // 判断是否完成查询
     if (this._counter > (osuname.length - 1)) {
@@ -143,13 +143,12 @@ class OnlineQueryClass implements OnlineQuery_types {
       }
     } else if (appStatus.isQuery) {
       // 如果撞锁多次，则强制停止程序
-      if (this._busyCounter > 2) {
+      if (this._busyCounter > 1) {
         log.fatal('askBancho: cannot start because isQuery = true, exit.')
       } else {
         this._busyCounter = this._busyCounter + 1
         log.warn(`askBancho: cannot start because isQuery = true, counter ${this._busyCounter}`)
       }
-      log.fatal('askBancho: cannot start because isQuery = true, exit.')
     }
   }
 

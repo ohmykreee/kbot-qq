@@ -209,8 +209,13 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
               resolve(`[CQ:image,file=${res.data.url}]\n（来源：${res.data.source}）`)
             })
             .catch((error) => {
-              log.error(`fetchRandomImg: ${error.toString()}`)
-              resolve("发生非致命错误，已上报给管理员。")
+              if (error.request && error.code === "ETIMEDOUT") {
+                log.error(`fetchRandomImg: ${error.toString()}`)
+                resolve("连接到api超时，稍会再试试吧...")
+              } else {
+                log.error(`fetchRandomImg: ${error.toString()}`)
+                resolve("发生非致命错误，已上报给管理员。")
+              }
             })
           break
 

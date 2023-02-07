@@ -166,27 +166,24 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
         }
         axios.get(twitterUrl)
           .then(res => {
-            const rssDoc = new JSDOM(res.data)
-            const item = rssDoc.window.document.querySelectorAll('item').item(0)
-            // 一个很奇葩的bug，需要再次声明一次，极其不稳定（被pubDate、RTuser使用）
-            const rssDoc2 = new JSDOM(res.data, {contentType: 'application/xml'})
-            const item2 = rssDoc2.window.document.querySelectorAll('item').item(0)
+            const rssDoc = new JSDOM(res.data, {contentType: 'application/xml'})
+            const item = rssDoc.window.document.getElementsByTagName('item').item(0) as Element
             // 准备推文内容
-            let user :string = rssDoc.window.document.querySelectorAll('title').item(0).innerHTML
-            let content :string = item.querySelector('title')?.innerHTML as string
+            let user :string = rssDoc.window.document.getElementsByTagName('title').item(0)?.innerHTML as string
+            let content :string = item.getElementsByTagName('title').item(0)?.innerHTML as string
             // 判断是否为转推，是则加上被转推的对象
             if (/^RT by/g.test(content)) {
-              let RTuser :string = item2.querySelector('creator')?.innerHTML as string
+              let RTuser :string = item.getElementsByTagName('dc:creator').item(0)?.innerHTML as string
               content = `（转推自 ${RTuser}）\n` + content
             }
             // 处理时间，并将 GMT 转换为当前时区
-            const pubDateGMT :string = item2.querySelector('pubDate')?.innerHTML as string
+            const pubDateGMT :string = item.getElementsByTagName('pubDate').item(0)?.innerHTML as string
             const pubDate :string = new Date(Date.parse(pubDateGMT)).toLocaleString('zh-CN')
             // 组装文字主体（又被风控了捏，用 text2img）
             reply = text2img(`${user}\n>>>>>\n\n${content}\n\n<<<<<\n（发布时间：${pubDate}）`)
             // 检测是否含图片（视频放弃检测）
-            if (item.querySelector('description')?.innerHTML.match(/<img[^>]+src="([^">]+)"/gm)) {
-              const imgs = item.querySelector('description')?.innerHTML.match(/<img[^>]+src="([^">]+)"/gm)
+            if (item.getElementsByTagName('description').item(0)?.innerHTML.match(/<img[^>]+src="([^">]+)"/gm)) {
+              const imgs = item.getElementsByTagName('description').item(0)?.innerHTML.match(/<img[^>]+src="([^">]+)"/gm)
               for (const img of imgs!) {
                 reply = reply + `\n[CQ:image,file=${img.slice(10, -1)}]`
               }

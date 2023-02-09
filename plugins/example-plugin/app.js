@@ -1,7 +1,7 @@
 // 此处修改插件信息
 const pluginInfo = {
   name: "example-plugin",
-  version: "v1.0.0"
+  version: "v2.0.0"
 }
 
 // 以下内容请勿随意修改！

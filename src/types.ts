@@ -58,9 +58,18 @@ export interface gokapiReply_types {
  * 
  */
 export interface plugin_types {
-  name :string
-  version :string
-  start() :Promise<void>
+  name :string | undefined
+  version :string | undefined
   stop() :Promise<void>
-  receiver(msg :msg_types) :Promise<msg_types | void>
+  receiver(msg :msg_types) :void
+}
+
+export interface plugin_info_types {
+  name: string
+  version: string
+}
+
+export interface plugin_ipc {
+  type: "startup" | "message"
+  data: plugin_info_types | msg_types
 }

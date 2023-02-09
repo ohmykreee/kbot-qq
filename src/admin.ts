@@ -29,7 +29,7 @@ export function adminHandler(msg :Array<string>) :Promise<string> {
   /kbot help                                输出该帮助信息\n
   /kbot restart                             以异常状态停止程序并等待 daemon 重启程序\n
   /kbot stop                                无退出码停止程序，如果程序此前有异常则会被 daemon 重启\n
-  /kbot reload                              临时重载所有插件\n
+  /kbot reload                              重载所有插件\n
   /kbot log [数字]                          获取最近指定数目的日志\n
   /kbot dbadd/dbrm [数据库名] [字符串]       数据库增减操作\n
   /kbot dblist [数据库名]                    返回该数据库的所有内容
@@ -74,7 +74,7 @@ export function adminHandler(msg :Array<string>) :Promise<string> {
         case "reload":
           await pluginsUnload()
           await pluginsLoad()
-          resolve("已临时重载所有的插件。\n注意：该方法存在内存泄漏，需要稍后重启整个程序以解决！")
+          resolve("已重载所有的插件。")
         break
 
         case "dbadd":

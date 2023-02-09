@@ -148,6 +148,9 @@ npm run dev
 
 **注意:** 请仅安装来自可信来源的插件！恶意插件可能会造成不可挽回的损失！
 
+**注意:** 在 `v2.6.0` 及以后的版本，使用了新方法运行插件。插件的编写方法也发生了变化。
+如需了解老版本插件编写方法，请在历史中参考老版本的 README.md。
+
 1. 初始化插件项目
 
 首先确保完成以上内容，能够在开发环境中成功运行 `kbot-qq`。
@@ -156,8 +159,7 @@ cd plugins
 mkdir my-plugin
 cd my-plugin
 npm init
-npx tsc --init
-cp ../example-plugin/app.ts ./
+cp ../example-plugin/app.js ./
 ```
 在 `package.json` 中添加一行：
 ```json
@@ -165,39 +167,22 @@ cp ../example-plugin/app.ts ./
   "type": "module",
 }
 ```
-在 `tsconfig.json` 中修改两行：
-```json
-{
-  "compilerOptions": {
-    "target": "es2020",
-    "module": "ESNext",
-  }
-}
-```
 
 2. 安装依赖
 
 直接在插件的子目录处执行 `npm install --save [package]`。
 
-**注意:** 生成 js 文件时会自动带上插件的 `package.json` `package-lock.json` `tsconfig.json` 文件，在安装插件时需要在插件目录下执行一遍 `npm install`！
+**注意:** 生成 js 文件时会自动带上插件的 `package.json`、`package-lock.json` 文件，在安装插件时需要在插件目录下执行一遍 `npm install`！
 
 3. 编写插件
 
-**注意:** 请勿修改入口文件 `app.ts` 的文件名！
+**注意:** 请勿修改入口文件 `app.js` 的文件名！
 
-修改 `app.ts` 完成开发。
+修改 `app.js` 完成开发。
 
-以下为开发时注意事项：
-- 导入第三方包时，会出现路径错误。可以尝试使用：
-```typescript
-import path from 'path'
+由于使用子进程的方式运行插件，插件的运行和主程序的运行几乎隔离。因此只需要使用常规的独立应用开发方式进行开发，使用指定函数完成与主程序的数据获取与输出。
 
-const mainDir = path.resolve()
-const { ChatGPTAPIBrowser } = await import(`file:///${mainDir}/plugins/chatgpt/node_modules/chatgpt/build/index.js`)
-```
-- 请勿修改程序关键部分，可能会引发未知错误。
-- `stop()` 方法必须使用 `resolve()` 返回，否则程序在退出时会卡住。
-- 如果需要主动发送消息，可以导入 `../../src/plugin` 中的 `pluginSendMsg()` 方法，传递值与 `PluginClass.receiver()` 方法返回值类型相同。
+主程序运行时需要插件文件为 js 文件而非 ts 文件，如有 TypeScript 开发需求，需要将 ts 文件提前转换为 js 文件后再执行主程序。
 
 4. 编译插件
 ```bash

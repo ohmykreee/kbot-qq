@@ -1,8 +1,64 @@
-import { msg_types, msg_response_types, plugin_types } from "./types.js"
+import { msg_types, msg_response_types, plugin_types, plugin_info_types, plugin_ipc } from "./types.js"
 import { makeResponse } from "./app.js"
 import fs from 'fs/promises'
 import { log } from "./logger.js"
 import path from 'path'
+import child_process from 'child_process'
+
+class PluginClass implements plugin_types {
+  constructor(path :string) {
+    this._childProcess = child_process.spawn(process.execPath, ['app.js'], { cwd: path, stdio: [ 'pipe', 'inherit', 'inherit', 'ipc' ] })
+    this._register()
+
+    this._path = path
+    this.stop = this.stop
+    this.receiver = this.receiver
+  }
+
+  private _path: string
+  private _childProcess :child_process.ChildProcess
+  name :string | undefined
+  version :string | undefined
+
+  // 注册一些事件
+  private _register() {
+    this._childProcess.on("message", (data: plugin_ipc) => {this._msgHandler(data)})
+    this._childProcess.on("error", () => { this._errHandler() })
+  }
+
+  private _msgHandler(data: plugin_ipc) {
+    if (data.type === "message") {
+      const msg_send = data.data as msg_types
+      pluginSendMsg(msg_send)
+    } else {
+      const pluginMetadata = data.data as plugin_info_types
+      log.info(`Plugin: load: ${pluginMetadata.name}, version: ${pluginMetadata.version}`)
+      this.name = pluginMetadata.name
+      this.version = pluginMetadata.version
+    }
+  }
+
+  private _errHandler() {
+    log.warn(`Plugin: ${this.name} quit with error, version: ${this.version}. Will restart after 3s!`)
+    setTimeout(() => {
+      this._childProcess = child_process.spawn(process.execPath, ['app.js'], { cwd: this._path, stdio: [ 'pipe', 'inherit', 'inherit', 'ipc' ] })
+      this._register()
+    }, 3000)
+  }
+
+  stop() :Promise<void> {
+    return new Promise((resolve) => {
+      this._childProcess.once("close", () => {
+        resolve()
+      })
+      this._childProcess.send(0) // 如果想要停止插件，可以选择直接传入非 object（推荐纯数字）
+    })
+  }
+
+  receiver(msg: msg_types): void {
+    this._childProcess.send(msg)
+  }
+}
 
 // 定义一个插件管理器并初始化
 class PluginManagerClass {
@@ -10,10 +66,8 @@ class PluginManagerClass {
 
   load(path: string): Promise<void> {
     return new Promise(async (resolve) => {
-      const { default: plugin } = await import(`${path}?update=${Date.now()}`)  // 会产生内存泄漏
-      plugin.start()
+      const plugin = new PluginClass(path)
       this._plugins.push(plugin)
-      log.info(`PluginManager: load: ${plugin.name}, version: ${plugin.version}`)
       resolve()
     })
   }
@@ -32,12 +86,6 @@ class PluginManagerClass {
   pushMsg(msg :msg_types) :void {
     for (let plugin of this._plugins) {
       plugin.receiver(msg)
-        .then((msg_send) => {
-          // 判断是否传入消息（因为可返回 void）
-          if (msg_send) {
-            pluginSendMsg(msg_send)
-          }
-        })
     }
   }
 }
@@ -54,10 +102,10 @@ export async function pluginsLoad() :Promise<void> {
     .filter(dirent => dirent.isDirectory())
     .map(dirent => dirent.name)
   for (const plugin of pluginList) {
-    // 判断是否存在 app.js/app.ts
+    // 判断是否存在 app.js
     const pluginFiles = await fs.readdir(`${mainDir}/plugins/${plugin.name}`)
-    if (pluginFiles.includes("app.js") || pluginFiles.includes("app.ts")) {
-      await PluginManager.load(`file:///${mainDir}/plugins/${plugin.name}/app.js`)
+    if (pluginFiles.includes("app.js")) {
+      await PluginManager.load(`${mainDir}/plugins/${plugin.name}`)
     } else {
       log.warn(`PluginManager: load: Invalid plugin folder: ${plugin.name}`)
     }

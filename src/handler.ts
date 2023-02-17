@@ -20,7 +20,7 @@ import { randomBytes } from "crypto"
  * @returns Promise<string>，返回值为回复内容或文字错误信息
  * 
  */
-export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
+export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | void> {
   return new Promise(async (resolve, reject) => {
     // 定义用于存储回复消息字符的变量
     let reply :string = ''
@@ -366,8 +366,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string> {
         break
 
       default: 
-        reply = "智商有点低，听不懂（使用 /help 获取命令列表）"
-        resolve(reply)
+        resolve()
     }
   })
 }

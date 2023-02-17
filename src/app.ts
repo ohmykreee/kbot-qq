@@ -162,7 +162,7 @@ function fetchResponse(msg: msg_types, text :string, type :'admin' | 'mp' | 'mai
     case "main":
       msgHandler(textArray, msg.user_id)
         .then((reply) => {
-          msgReply(reply)
+          reply? msgReply(reply):pluginReceiveMsg(msg)  //非handler.ts中的命令现在会传递给插件
         })
       break
     case "other":

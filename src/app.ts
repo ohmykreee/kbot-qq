@@ -70,7 +70,9 @@ export async function handleExit(exitCode? :number) :Promise<void> {
  * 当接收到 go-cqhttp 任意内容时触发
  *
  * @remarks
- * 由 WebSocket 的 message 事件触发，并传递含处理过的text的msg给 {@link fetchResponse()}
+ * 由 WebSocket 的 message 事件触发，并传递含处理过的消息段给 {@link fetchResponse()}
+ * 
+ * 消息段类型可参考{@link https://github.com/botuniverse/onebot-11/blob/master/message/segment.md}
  *
  * @param data - 接收消息的 object，内容可参考{@link https://github.com/botuniverse/onebot-11/blob/master/event/message.md}
  * 
@@ -80,7 +82,7 @@ function ifNeedResponed(data :any) :void {
   switch(data.post_type) {
     case"message":
       const msg :msg_types = {
-        raw_text: data.raw_message as string,  //TODO: 当 cqhttp 的上报类型改为 array 后，message 字段会有更丰富的信息，后期可以考虑利用
+        raw_text: data.raw_message as string,  //TODO: 改为消息段，并且把文字内容提取出来，其他原封不动复制
         message_type: data.message_type as string,
         user_id: data.sender.user_id as number,
         group_id: data.message_type === 'group'? data.group_id as number:undefined
@@ -111,6 +113,7 @@ function ifNeedResponed(data :any) :void {
       break
 
     case "meta_event":
+    case "request": // 请求事件
     default:
       // 若判断为源事件/非消息，则传入 handleCallback 进行下一步处理
       handleCallback(data)
@@ -220,7 +223,7 @@ export function makeResponse(res :msg_response_types) :void {
  * @remarks
  * 接收来自 {@link ifNeedResponed()} 的非接收消息的内容，并处理输出至日志中
  *
- * @param data - 非接收消息的 object，内容可参考{@link https://github.com/botuniverse/onebot-11/blob/master/event/meta.md}
+ * @param data - 非接收消息的 object，内容可参考{@link https://github.com/botuniverse/onebot-11/blob/master/event/notice.md}
  * 
  */
 function handleCallback(data :any) :void {
@@ -240,6 +243,9 @@ function handleCallback(data :any) :void {
       if (data.echo) {
         // 发送消息后的反馈
         log.info(`callback: ${data.status}, retcode:${data.retcode}, echo:${data.echo}`)
+        if (data.status === "failed") {
+          log.error(`Send failed: ${JSON.stringify(data)}`)
+        }
       } else {
         // 无法判断时直接输出至日志
         log.debug(`unhandled: ${JSON.stringify(data)}`)

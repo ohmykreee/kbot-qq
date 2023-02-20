@@ -77,35 +77,43 @@ export async function handleExit(exitCode? :number) :Promise<void> {
  */
 function ifNeedResponed(data :any) :void {
   // 判断是否为消息
-  if (data.raw_message) {
-    const msg :msg_types = {
-      raw_text: data.raw_message as string,  //TODO: 当 cqhttp 的上报类型改为 array 后，message 字段会有更丰富的信息，后期可以考虑利用
-      message_type: data.message_type as string,
-      user_id: data.sender.user_id as number,
-      group_id: data.message_type === 'group'? data.group_id as number:undefined
-    }
-    // 判断是否包含触发字符：/
-    if (msg.raw_text.slice(0, 1) === '/') {
-      const command :string = msg.raw_text.slice(1)
-      // 判断是否是来自私聊的管理员的命令
-      if (msg.message_type === 'private' && config.adminQQ.includes(msg.user_id) && /^kbot/g.test(command)) {
-        fetchResponse(msg, command, "admin")
-        log.info(`[${msg.user_id}] [Admin] ${command}`)
-      // 判断是否来自群聊的mp命令
-      } else if (msg.message_type === 'group' && /^mp/g.test(command)) {
-        fetchResponse(msg, command, "mp")
-        log.info(`[${msg.user_id}] [mp] ${command}`)
-      // 普通的带/的命令
-      } else {
-        fetchResponse(msg, command, "main")
-        log.info(`[${msg.user_id}] ${command}`)
+  switch(data.post_type) {
+    case"message":
+      const msg :msg_types = {
+        raw_text: data.raw_message as string,  //TODO: 当 cqhttp 的上报类型改为 array 后，message 字段会有更丰富的信息，后期可以考虑利用
+        message_type: data.message_type as string,
+        user_id: data.sender.user_id as number,
+        group_id: data.message_type === 'group'? data.group_id as number:undefined
       }
-    } else {
-      fetchResponse(msg, msg.raw_text, "other")
-    }
-  } else {
-    // 若判断为非消息，则传入 handleCallback 进行下一步处理
-    handleCallback(data)
+      // 判断是否包含触发字符：/
+      if (msg.raw_text.slice(0, 1) === '/') {
+        const command :string = msg.raw_text.slice(1)
+        // 判断是否是来自私聊的管理员的命令
+        if (msg.message_type === 'private' && config.adminQQ.includes(msg.user_id) && /^kbot/g.test(command)) {
+          fetchResponse(msg, command, "admin")
+          log.info(`[${msg.user_id}] [Admin] ${command}`)
+        // 判断是否来自群聊的mp命令
+        } else if (msg.message_type === 'group' && /^mp/g.test(command)) {
+          fetchResponse(msg, command, "mp")
+          log.info(`[${msg.user_id}] [mp] ${command}`)
+        // 普通的带/的命令
+        } else {
+          fetchResponse(msg, command, "main")
+          log.info(`[${msg.user_id}] ${command}`)
+        }
+      } else {
+        fetchResponse(msg, msg.raw_text, "other")
+      }
+      break
+
+    case"notice":
+      handleNotify(data)
+      break
+
+    case "meta_event":
+    default:
+      // 若判断为源事件/非消息，则传入 handleCallback 进行下一步处理
+      handleCallback(data)
   }
 }
 
@@ -216,19 +224,63 @@ export function makeResponse(res :msg_response_types) :void {
  * 
  */
 function handleCallback(data :any) :void {
-  // 判断是否为消息发送后的反馈
-  if (data.echo) {
-    log.info(`callback: ${data.status}, retcode:${data.retcode}, echo:${data.echo}`)
-  // 判断是否为生命周期事件
-  } else if (data.post_type == 'meta_event' && data.meta_event_type == 'lifecycle') {
-    log.info(`${data.sub_type} user_id=${data.self_id}`)
-    adminNotify(`${data.sub_type} user_id=${data.self_id}`)
-  // 判断是否为心跳事件
-  } else if (data.post_type == 'meta_event' && data.meta_event_type == 'heartbeat') {
-    log.debug(`heartbeat interval=${data.interval}`)
-  // 无法判断时直接输出至日志
-  } else {
-    log.warn(`unhandled: ${JSON.stringify(data)}`)
+  switch(data.meta_event_type) {
+    case"lifecycle":
+      // 生命周期事件
+      log.info(`${data.sub_type} user_id=${data.self_id}`)
+      adminNotify(`${data.sub_type} user_id=${data.self_id}`)
+      break
+    
+    case"heartbeat":
+      // 心跳事件
+      log.debug(`heartbeat interval=${data.interval}`)
+      break
+
+    default:
+      if (data.echo) {
+        // 发送消息后的反馈
+        log.info(`callback: ${data.status}, retcode:${data.retcode}, echo:${data.echo}`)
+      } else {
+        // 无法判断时直接输出至日志
+        log.debug(`unhandled: ${JSON.stringify(data)}`)
+      }
+  }
+}
+
+/**
+ * 处理通知类型的内容
+ *
+ * @remarks
+ * 接收来自 {@link ifNeedResponed()} 的通知的内容，目前只有戳一戳互戳
+ *
+ * @param data - 非接收消息的 object，内容可参考{@link https://github.com/botuniverse/onebot-11/blob/master/event/meta.md}
+ * 
+ */
+function handleNotify(data :any) :void {
+  switch(data.sub_type) {
+    case"poke":
+      // 戳一戳
+      if (data.self_id === data.target_id) {
+        const msg_params :msg_params_types = {
+          message: `[CQ:poke,qq=${data.sender_id}]`,
+          user_id: data.sender_id,
+          message_type: data.group_id? "group":"private",
+          group_id: data.group_id? data.group_id:undefined
+        }
+        // 构建发送给 go-cqhttp 的消息主体
+        const msg_send :object = {
+          "action": "send_msg" as string,
+          "params": msg_params as msg_params_types,
+          "echo": `Poke ${msg_params.user_id}`
+        }
+        //通过 WebSocket 发送消息给 go-cqhttp
+        client.send(JSON.stringify(msg_send))
+      }
+      break
+
+    default:
+      // 无法判断时直接输出至日志
+      log.debug(`unhandled notify: ${JSON.stringify(data)}`)
   }
 }
 

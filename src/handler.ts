@@ -40,7 +40,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | v
   /在线 更新                           立即请求一次 osu! 在线列表的更新\n
   /吃什么                              不知道今天中午/晚上吃什么？问我！\n
   /星期四                              星期四？想什么呢！\n
-  /抽一张                              从 Mono 精选里抽一张（无涩涩），赞美 Mono！\n
+  /抽一张                              抽一张 Pixiv 图（api.lolicon.app）\n
   /推 [推特ID]                         返回最新的一条推文（且用且珍惜）\n
   /推图 [推特ID]                       返回最新的一条带图片推文（且用且珍惜）\n
   /img [图片]                          上传图片并生成链接（记得/img后面要加空格）\n
@@ -201,9 +201,16 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | v
           break
 
       case "抽一张":
-          axios.get("https://desu.life/random_image?type=json")
+        // api 来自 https://api.lolicon.app/
+          axios.get("https://api.lolicon.app/setu/v2?r18=0&size=original&proxy=i.pixiv.cat&excludeAI=true")
             .then(res => {
-              resolve(`[CQ:image,file=${res.data.url}]\n（来源：${res.data.source}）`)
+              if (res.data.data) {
+                const data = res.data.data[0]
+                resolve(`[CQ:image,file=${data.urls.original}]\n（来源：https://www.pixiv.net/artworks/${data.pid}）`)
+              } else {
+                log.error(`LoliconApi: ${res.data.error}`)
+                resolve("调用api时发生错误，稍会再试试吧...")
+              }
             })
             .catch((error) => {
               if (error.request && error.code === "ETIMEDOUT") {

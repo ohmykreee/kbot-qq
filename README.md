@@ -6,7 +6,7 @@
 # 如何部署
 0. 前提
 - Node `v18.12.1` 或更高
-- cqhttp 实例（开启了一个 ws 服务器）
+- cqhttp 实例（开启了一个 ws 服务器，且上报类型为 `array`）
 - osu! 账号（最好无人使用）
   - osu Bancho IRC 的账号与密码（[可在这里获取，需要账号拥有 100 次游玩记录](https://osu.ppy.sh/p/irc)）
   - osu!api 的客户端 ID 与 token（[可在这里获取](https://osu.ppy.sh/home/account/edit#new-oauth-application)）

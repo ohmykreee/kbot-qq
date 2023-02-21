@@ -23,7 +23,7 @@ class PluginClass implements plugin_types {
   // 注册一些事件
   private _register() {
     this._childProcess.on("message", (data: plugin_ipc) => {this._msgHandler(data)})
-    this._childProcess.on("error", () => { this._errHandler() })
+    this._childProcess.once("close", () => { this._errHandler() })
   }
 
   private _msgHandler(data: plugin_ipc) {
@@ -39,7 +39,7 @@ class PluginClass implements plugin_types {
   }
 
   private _errHandler() {
-    log.warn(`Plugin: ${this.name} quit with error, version: ${this.version}. Will restart after 3s!`)
+    log.error(`Plugin: ${this.name} quit, version: ${this.version}. Will restart after 3s!`)
     setTimeout(() => {
       this._childProcess = child_process.spawn(process.execPath, ['app.js'], { cwd: this._path, stdio: [ 'pipe', 'inherit', 'inherit', 'ipc' ] })
       this._register()
@@ -48,6 +48,7 @@ class PluginClass implements plugin_types {
 
   stop() :Promise<void> {
     return new Promise((resolve) => {
+      this._childProcess.removeAllListeners("close")
       this._childProcess.once("close", () => {
         resolve()
       })
@@ -56,7 +57,9 @@ class PluginClass implements plugin_types {
   }
 
   receiver(msg: msg_types): void {
-    this._childProcess.send(msg)
+    if (this._childProcess.channel) {
+      this._childProcess.send(msg)
+    }
   }
 }
 

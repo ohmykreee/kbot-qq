@@ -53,12 +53,8 @@ export function adminHandler(msg :Array<string>) :Promise<string> {
   
       case "log":
         //如果请求中不包含数字则在末尾添加 5 来给予一个默认值
-        let count :number
-        if (!msg[2] && !(/\d+/.test(msg[2]))) {
-          count = 5
-        } else {
-          count = parseInt(msg[2])
-        }
+        let count :number = parseInt(msg[2])
+        if (isNaN(count)) count = 5
         log.readLog(count)
           .then((logs) => {
             logs.map((log) => {
@@ -83,8 +79,8 @@ export function adminHandler(msg :Array<string>) :Promise<string> {
           const dbName :"osu" | "food" | "vw50" = msg[2] as "osu" | "food" | "vw50"
           let value :string = msg.slice(3).join(" ")
           // 处理 osu 用户名中的俩特殊字符
-          value = value.replace(/&#91;/i, '[')
-          value = value.replace(/&#93;/i, ']')
+          value = value.replaceAll("&#91;", '[')
+          value = value.replaceAll("&#93;", ']')
           if (["osu", "food", "vw50"].includes(dbName)) {
             if (msg[1] === "dbadd" && value) {
               await db.push(dbName, value)

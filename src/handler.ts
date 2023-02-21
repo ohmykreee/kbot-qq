@@ -87,8 +87,8 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | v
 
           case "添加":
             let user :string = msg.slice(2).join(" ")
-            user = user.replace(/&#91;/i, '[')
-            user = user.replace(/&#93;/i, ']')
+            user = user.replaceAll("&#91;", '[')
+            user = user.replaceAll("&#93;", ']')
             // 检查名字是否格式正确
             if (!user || !user.match(/^[A-Za-z0-9 \[\]_-]+$/)) {
               resolve('请输入有效的用户名！')
@@ -172,7 +172,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | v
             let user :string = rssDoc.window.document.getElementsByTagName('title').item(0)?.innerHTML as string
             let content :string = item.getElementsByTagName('title').item(0)?.innerHTML as string
             // 判断是否为转推，是则加上被转推的对象
-            if (/^RT by/g.test(content)) {
+            if (content.indexOf("RT by") === 0) {
               let RTuser :string = item.getElementsByTagName('dc:creator').item(0)?.innerHTML as string
               content = `（转推自 ${RTuser}）\n` + content
             }
@@ -250,8 +250,8 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | v
         }
         // 获取用户id，以及替换两个奇葩字符 []
         let user :string = queryMode? msg.slice(1, -1).join(" "):msg.slice(1).join(" ")
-        user = user.replace(/&#91;/i, '[')
-        user = user.replace(/&#93;/i, ']')
+        user = user.replaceAll("&#91;", '[')
+        user = user.replaceAll("&#93;", ']')
         // 判断是否存在用户名
         if (!user || !user.match(/^[A-Za-z0-9 \[\]_-]+$/)) {
           resolve('请输入有效的用户名！')

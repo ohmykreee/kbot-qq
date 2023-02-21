@@ -34,12 +34,19 @@ process.on("message", data => {
 function handleMsg(msg) {
   if (/^[Kk]reee[ ,，]/g.test(msg.raw_text)) {
     const reply = {
-      raw_text: `检测到旧版本的命令格式，请使用 “/help” 获取最新命令格式！${msg.group_id? `\n[CQ:at,qq=${msg.user_id}]`:""}`,
+      text: `检测到旧版本的命令格式，请使用 “/help” 获取最新命令格式！${msg.group_id? `\n[CQ:at,qq=${msg.user_id}]`:""}`,
       message_type: msg.message_type,
       user_id: msg.user_id,
       group_id: msg.group_id? msg.group_id:undefined
     }
-    sendMsg(reply) // 发送消息，类型为 msg_types
+    // 发送消息，类型为 msg_response_types，具体如下：
+    // interface msg_response_types {
+    //   message_type :string,
+    //   text :string,
+    //   user_id :number,
+    //   group_id? :number
+    // }
+    sendMsg(reply)
   }
 }
 

@@ -1,5 +1,6 @@
 import { msg_types, msg_response_types, msg_params_types, appStatus_types } from "./types.js"
 import config from "../botconfig.js"
+import info from '../package.json' assert { type: "json" }
 import db from "./db.js"
 import { WebSocket } from "ws"
 import { msgHandler } from "./handler.js"
@@ -36,9 +37,9 @@ db.init()
 
 // 在程序出现 kill/未知异常 时调用 handleExit() 
 // TODO: 需要更多的测试确保稳定性
-process.on('SIGINT', () => {process.stdin.resume(); handleExit(process.exitCode)})
-process.on('SIGUSR1', () => {process.stdin.resume(); handleExit(process.exitCode)})
-process.on('SIGUSR2', () => {process.stdin.resume(); handleExit(process.exitCode)})
+process.once('SIGINT', () => {process.stdin.resume(); handleExit(process.exitCode)})
+process.once('SIGUSR1', () => {process.stdin.resume(); handleExit(process.exitCode)})
+process.once('SIGUSR2', () => {process.stdin.resume(); handleExit(process.exitCode)})
 // if (!config.debug) { process.on('uncaughtException', () => {process.stdin.resume(); handleExit(process.exitCode)}) }
 
 /**
@@ -82,20 +83,20 @@ function ifNeedResponed(data :any) :void {
   switch(data.post_type) {
     case"message":
       const msg :msg_types = {
-        raw_text: data.raw_message as string,  //TODO: 改为消息段，并且把文字内容提取出来，其他原封不动复制
+        raw_text: data.raw_message as string,
         message_type: data.message_type as string,
         user_id: data.sender.user_id as number,
         group_id: data.message_type === 'group'? data.group_id as number:undefined
       }
       // 判断是否包含触发字符：/
-      if (msg.raw_text.slice(0, 1) === '/') {
+      if (Array.from(msg.raw_text)[0] === "/") {
         const command :string = msg.raw_text.slice(1)
         // 判断是否是来自私聊的管理员的命令
-        if (msg.message_type === 'private' && config.adminQQ.includes(msg.user_id) && /^kbot/g.test(command)) {
+        if (msg.message_type === 'private' && config.adminQQ.includes(msg.user_id) && command.indexOf("kbot") === 0) {
           fetchResponse(msg, command, "admin")
           log.info(`[${msg.user_id}] [Admin] ${command}`)
         // 判断是否来自群聊的mp命令
-        } else if (msg.message_type === 'group' && /^mp/g.test(command)) {
+        } else if (msg.message_type === 'group' && command.indexOf("mp") === 0) {
           fetchResponse(msg, command, "mp")
           log.info(`[${msg.user_id}] [mp] ${command}`)
         // 普通的带/的命令
@@ -247,8 +248,8 @@ function handleCallback(data :any) :void {
   switch(data.meta_event_type) {
     case"lifecycle":
       // 生命周期事件
-      log.info(`${data.sub_type} user_id=${data.self_id}`)
-      adminNotify(`${data.sub_type} user_id=${data.self_id}`)
+      log.info(`${data.sub_type} user_id=${data.self_id} version=${info.version}`)
+      adminNotify(`${data.sub_type} user_id=${data.self_id} version=${info.version}`)
       break
     
     case"heartbeat":

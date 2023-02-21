@@ -28,7 +28,7 @@ class PluginClass implements plugin_types {
 
   private _msgHandler(data: plugin_ipc) {
     if (data.type === "message") {
-      const msg_send = data.data as msg_types
+      const msg_send = data.data as msg_response_types
       pluginSendMsg(msg_send)
     } else {
       const pluginMetadata = data.data as plugin_info_types
@@ -136,9 +136,9 @@ export function pluginReceiveMsg(msg :msg_types) :void {
  * 发送消息到 app.ts 的 makeResponse()
  * 
  */
-export function pluginSendMsg(msg :msg_types) :void {
+export function pluginSendMsg(msg :msg_response_types) :void {
   const msg_response :msg_response_types= {
-    text: msg.raw_text,
+    text: msg.text,
     message_type: msg.message_type,
     user_id: msg.user_id,
     group_id: msg.group_id? msg.group_id:undefined

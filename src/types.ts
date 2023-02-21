@@ -64,12 +64,20 @@ export interface plugin_types {
   receiver(msg :msg_types) :void
 }
 
+/**
+ * 插件向主体传递版本信息
+ * 
+ */
 export interface plugin_info_types {
   name: string
   version: string
 }
 
+/**
+ * 插件向主体传递需要发送的消息
+ * 
+ */
 export interface plugin_ipc {
   type: "startup" | "message"
-  data: plugin_info_types | msg_types
+  data: plugin_info_types | msg_response_types
 }

@@ -40,7 +40,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | v
   /在线 更新                           立即请求一次 osu! 在线列表的更新\n
   /吃什么                              不知道今天中午/晚上吃什么？问我！\n
   /星期四                              星期四？想什么呢！\n
-  /抽一张 [tag(可选)]                  抽一张 Pixiv 图（api.lolicon.app）\n
+  /抽一张 [tag(可选)]                  抽一张 Pixiv 图（docs.anosu.top）\n
   /推 [推特ID]                         返回最新的一条推文（且用且珍惜）\n
   /推图 [推特ID]                       返回最新的一条带图片推文（且用且珍惜）\n
   /img [图片]                          上传图片并生成链接（记得/img后面要加空格）\n
@@ -201,17 +201,14 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | v
           break
 
       case "抽一张":
-        // api 来自 https://api.lolicon.app/
-          axios.get(`https://api.lolicon.app/setu/v2?size=original&proxy=i.pixiv.cat&excludeAI=true${msg[1]? `&tag=${msg[1]}`:""}`)
+        // api 来自 https://docs.anosu.top/
+          axios.get(`https://image.anosu.top/pixiv/json?num=1&r18=0&size=original&proxy=i.pixiv.cat${msg[1]? `&keyword=${msg[1]}`:""}`)
             .then(res => {
-              if (res.data.data.length !== 0) {
-                const data = res.data.data[0]
-                resolve(`抽一张${msg[1]? `tag是 ${msg[1]} 的`:""}图：\n[CQ:image,file=${data.urls.original}]\n（来源：https://www.pixiv.net/artworks/${data.pid}）`)
-              } else if (!res.data.error) {
-                resolve("未搜到相关tag的作品，换一个关键词试试？")
+              if (res.data.length !== 0) {
+                const data = res.data[0]
+                resolve(`抽一张${msg[1]? `tag是 ${msg[1]} 的`:""}图：\n[CQ:image,file=${data.url}]\n（来源：https://www.pixiv.net/artworks/${data.pid}）`)
               } else {
-                log.error(`LoliconApi: ${res.data.error}`)
-                resolve("调用api时发生错误，稍会再试试吧...")
+                resolve("未搜到相关tag的作品，换一个关键词试试？")
               }
             })
             .catch((error) => {

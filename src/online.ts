@@ -141,7 +141,7 @@ class OnlineQueryClass implements OnlineQuery_types {
       this._reply = ''
       // 遍历查询
       for (const user of osuname) {
-        await new Promise(f => setTimeout(f, 500)) // 每次间隔 500ms
+        await new Promise(f => setTimeout(f, 2 * 1000)) // 每次间隔 2s
         this._client[0].send('BanchoBot', `STATS ${user}`)
       }
     } else if (appStatus.isQuery) {

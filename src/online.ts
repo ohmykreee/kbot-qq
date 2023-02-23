@@ -78,7 +78,7 @@ class OnlineQueryClass implements OnlineQuery_types {
    * 处理来自 BanchoBot 的消息，同时查询结束后将结果存储至 {@link statsResult} 中
    * ```paintext
    * 以下为事例消息（每一行都为新的一次触发）：
-   * Stats for (Kreee)[osu.ppy.sh/u/27746946] is Afk:
+   * Stats for (Kreee)[https://osu.ppy.sh/u/27746946] is Afk:
    * Score: 21,871,636 (#0)
    * Plays: 187 (lv22)
    * Accuracy: 87.35%
@@ -90,14 +90,14 @@ class OnlineQueryClass implements OnlineQuery_types {
   */
   private _receiver(msg: string): void {
     // 如果开头命中 Stats for 规则，则说明为所需的包含在线信息的内容，否则则丢弃
-    if (/^Stats for/g.test(msg)) {
+    if (msg.indexOf("Stats for") === 0) {
       this._counter = this._counter + 1  // 给查询计数加一，用于判断是否查询完成
-      let spliter :Array<string> = msg.split(' ')  // 字符由空格分开为字符组
+      let spliter :string[] = msg.split(' ')  // 字符由空格分开为字符组
       let spliterlen :number = spliter.length      // 获取字符组的长度，简化代码
       if (spliter[spliterlen - 2] === 'is') {      // 以字符组中是否包含 is 为判据判断是否在线
         let name_raw :string = spliter.slice(2, -2).join(' ')  // 去头去尾并拼接字符，防止因 id 中含有空格而造成错误
         // 拼接当前查询结果并存储在临时查询结果存储中
-        this._reply = this._reply + `\n${name_raw.match(/\(([^)]+)\)/)![1]} (${spliter[spliterlen - 1].slice(0, -1)})`
+        this._reply = this._reply + `\n${name_raw.slice(1, name_raw.indexOf("https://osu") - 2)} (${spliter[spliterlen - 1].slice(0, -1)})`
       }
     }
 

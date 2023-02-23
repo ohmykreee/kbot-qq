@@ -101,6 +101,12 @@ class OnlineQueryClass implements OnlineQuery_types {
       }
     }
 
+    // 如果有玩家更改了用户名导致无法查询
+    if (msg === "User not found") {
+      this._counter = this._counter + 1
+      log.error("getOSUStats: invalid username detected!")
+    }
+
     // 如果在开发模式下，输出所有来自 BanchoBot 的消息至日志，因为输出内容过于多所以注释禁用
     // console.log(`from BanchoBot: ${msg}`)
 
@@ -141,7 +147,7 @@ class OnlineQueryClass implements OnlineQuery_types {
       this._reply = ''
       // 遍历查询
       for (const user of osuname) {
-        await new Promise(f => setTimeout(f, 2 * 1000)) // 每次间隔 2s
+        await new Promise(f => setTimeout(f, 1 * 1000))
         this._client[0].send('BanchoBot', `STATS ${user}`)
       }
     } else if (appStatus.isQuery) {

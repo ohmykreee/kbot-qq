@@ -162,14 +162,6 @@ function fetchResponse(msg: msg_types, text :string, type :'admin' | 'mp' | 'mai
       user_id: msg.user_id,
       group_id: msg.message_type === "group"? msg.group_id:undefined
     }
-    // 判断是否为群消息，如是则在消息结尾加上at
-    if (res.message_type === "group") {
-      res.text = res.text + `\n[CQ:at,qq=${res.user_id}]`
-    }
-    // 判断是否在开发模式，如是则在消息结尾加上 (Dev mode)
-    if (config.debug) {
-      res.text = res.text + "\n(Dev mode)"
-    }
     // 消息发送失败时会使用 fallback 内消息
     const echo: echo_types = {
       type: "message",
@@ -177,6 +169,16 @@ function fetchResponse(msg: msg_types, text :string, type :'admin' | 'mp' | 'mai
       user_id: res.user_id,
       message_type: res.message_type,
       group_id: res.message_type === "group"? res.group_id:undefined
+    }
+    // 判断是否为群消息，如是则在消息结尾加上at
+    if (res.message_type === "group") {
+      res.text = res.text + `\n[CQ:at,qq=${res.user_id}]`
+      echo.fallback = echo.fallback + `\n[CQ:at,qq=${res.user_id}]`
+    }
+    // 判断是否在开发模式，如是则在消息结尾加上 (Dev mode)
+    if (config.debug) {
+      res.text = res.text + "\n(Dev mode)"
+      echo.fallback = echo.fallback + "\n(Dev mode)"
     }
     // 传入消息至 makeResponse()，回复消息
     makeResponse(res, echo)

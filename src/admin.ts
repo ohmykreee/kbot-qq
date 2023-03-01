@@ -13,9 +13,10 @@ import db from "./db.js"
  *
  * @param msg - 接收消息的字符数组
  * 
- * @returns Promise<string>，返回值为回复的字符串
+ * @returns Promise<string | string[]>，返回值为回复的字符串
+ * 如果返回是一个字符串数组，会取第一个作为回复，第二个为发送失败（通常为风控）时备用发送字符
  */
-export function adminHandler(msg :Array<string>) :Promise<string> {
+export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
   return new Promise(async (resolve) => {
     let reply :string = ""
     switch (msg[1]) {

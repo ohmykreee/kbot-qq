@@ -17,10 +17,12 @@ import { randomBytes } from "crypto"
  * @param msg - 接收消息的字符数组
  * @param qqid - 触发者的 QQ 号
  * 
- * @returns Promise<string>，返回值为回复内容或文字错误信息
+ * @returns Promise<string | string[] | void>，返回值为回复内容或文字错误信息
+ * 如果返回是一个字符串数组，会取第一个作为回复，第二个为发送失败（通常为风控）时备用发送字符
+ * 如未命中任何规则，则不回复（返回 void ）
  * 
  */
-export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | void> {
+export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | string[] | void> {
   return new Promise(async (resolve, reject) => {
     // 定义用于存储回复消息字符的变量
     let reply :string = ''
@@ -210,7 +212,8 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | v
             .then(res => {
               if (res.data.length !== 0) {
                 const data = res.data[0]
-                resolve(`抽一张${tag? `tag包含有 ${tag} 的`:""}图：\n[CQ:image,file=${data.url}]\n（来源：https://www.pixiv.net/artworks/${data.pid}）`)
+                resolve([`抽一张${tag? `tag包含有 ${tag} 的`:""}图：\n[CQ:image,file=${data.url}]\n（来源：https://www.pixiv.net/artworks/${data.pid}）`,
+                        `消息被拦截了＞﹏＜,以下是被抢救的消息：\n\n抽一张${tag? `tag包含有 ${tag} 的`:""}图：\n[图片]\n（来源：https://www.pixiv.net/artworks/${data.pid}）`])
               } else {
                 resolve(`未找到tag包含有 ${tag} 的作品，换一个关键词试试？`)
               }

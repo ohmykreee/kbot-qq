@@ -1,4 +1,4 @@
-import { msg_types, msg_response_types, plugin_types, plugin_info_types, plugin_ipc } from "./types.js"
+import type { msg_types, msg_response_types, echo_types, plugin_types, plugin_info_types, plugin_ipc } from "./types.js"
 import { makeResponse } from "./app.js"
 import fs from 'fs/promises'
 import { log } from "./logger.js"
@@ -146,5 +146,12 @@ export function pluginSendMsg(msg :msg_response_types) :void {
     user_id: msg.user_id,
     group_id: msg.group_id? msg.group_id:undefined
   }
-  makeResponse(msg_response)
+  const echo: echo_types = { // TODO: 未来开放给插件
+    type: "noreply",
+    fallback: "",
+    user_id: msg.user_id,
+    message_type: msg.message_type,
+    group_id: msg.group_id? msg.group_id:undefined
+  }
+  makeResponse(msg_response, echo)
 }

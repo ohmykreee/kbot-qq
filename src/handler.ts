@@ -201,17 +201,18 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | v
           break
 
       case "抽一张":
-        if (msg[1] && (msg[1].includes("&") || msg[1].includes("%26"))) {
+        const tag: string = msg.slice(1).filter(key => !key.includes("[CQ:")).join(" ")
+        if (tag && (tag.includes("&") || tag.includes("%26"))) {
           resolve("请求中包含非法字符！")
         }
         // api 来自 https://docs.anosu.top/
-          axios.get(`https://image.anosu.top/pixiv/json?num=1&r18=0&size=original&proxy=i.pixiv.cat&db=0${msg[1]? `&keyword=${msg[1]}`:""}`)
+          axios.get(`https://image.anosu.top/pixiv/json?num=1&r18=0&size=original&proxy=i.pixiv.cat&db=0${tag? `&keyword=${tag.replaceAll(" ", "%20")}`:""}`)
             .then(res => {
               if (res.data.length !== 0) {
                 const data = res.data[0]
-                resolve(`抽一张${msg[1]? `tag包含有 ${msg[1]} 的`:""}图：\n[CQ:image,file=${data.url}]\n（来源：https://www.pixiv.net/artworks/${data.pid}）`)
+                resolve(`抽一张${tag? `tag包含有 ${tag} 的`:""}图：\n[CQ:image,file=${data.url}]\n（来源：https://www.pixiv.net/artworks/${data.pid}）`)
               } else {
-                resolve("未搜到相关tag的作品，换一个关键词试试？")
+                resolve(`未找到tag包含有 ${tag} 的作品，换一个关键词试试？`)
               }
             })
             .catch((error) => {

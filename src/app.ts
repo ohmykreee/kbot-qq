@@ -1,4 +1,4 @@
-import { msg_types, msg_response_types, msg_params_types, appStatus_types } from "./types.js"
+import type { msg_types, msg_response_types, msg_params_types, echo_types, appStatus_types } from "./types.js"
 import config from "../botconfig.js"
 import info from '../package.json' assert { type: "json" }
 import db from "./db.js"
@@ -137,11 +137,28 @@ function fetchResponse(msg: msg_types, text :string, type :'admin' | 'mp' | 'mai
   const textArray: Array<string> = text.split(" ").filter(n => n.length > 0)
 
   // 封装一个方法，用于一些重复的操作
-  const msgReply = (text :string) => {
+  const msgReply = (reply :string | string[]) => {
+    const output: {text: string, fallback: string} = { // 实在想不出变量名了
+      text: "",
+      fallback: ""
+    }
+
+    if (Array.isArray(reply) && reply.length > 1) {
+      output.text = reply[0]
+      output.fallback = reply[1]
+    } else {
+      if (typeof reply === "string") {
+        output.text = reply
+      } else {
+        output.text = reply[0]
+      }
+      output.fallback = `消息被拦截了＞﹏＜,以下是被抢救的消息：\n\n${output.text.replaceAll(/(?<=\[CQ:(.*))(,(.*?))(?=\])/g, "")}`
+    }
+
     // 构建回复用主体
     const res :msg_response_types = {
       message_type: msg.message_type,
-      text: text,
+      text: output.text,
       user_id: msg.user_id,
       group_id: msg.message_type === "group"? msg.group_id:undefined
     }
@@ -153,8 +170,16 @@ function fetchResponse(msg: msg_types, text :string, type :'admin' | 'mp' | 'mai
     if (config.debug) {
       res.text = res.text + "\n(Dev mode)"
     }
+    // 消息发送失败时会使用 fallback 内消息
+    const echo: echo_types = {
+      type: "message",
+      fallback: output.fallback,
+      user_id: res.user_id,
+      message_type: res.message_type,
+      group_id: res.message_type === "group"? res.group_id:undefined
+    }
     // 传入消息至 makeResponse()，回复消息
-    makeResponse(res)
+    makeResponse(res, echo)
   }
 
   // 判断消息的类型
@@ -188,15 +213,6 @@ function fetchResponse(msg: msg_types, text :string, type :'admin' | 'mp' | 'mai
   }
 }
 
-// 发送消息的echo字段的类型
-interface echo_types {
-  type: "message" | "admin" | "noreply"
-  fallback?: string // 消息发送失败时发送的字符，之后要开放给 handler.ts 等，目前只是强制转换
-  user_id: number
-  message_type: string
-  group_id?: number
-}
-
 /**
  * 回复消息
  *
@@ -206,24 +222,17 @@ interface echo_types {
  * @param res - 回复消息的 object
  * 
  */
-export function makeResponse(res :msg_response_types) :void {
+export function makeResponse(res :msg_response_types, echo: echo_types) :void {
   const msg_params :msg_params_types = {
     message: res.text,
     user_id: res.user_id,
     message_type: res.message_type,
-    group_id: res.message_type === "group"? res.group_id:undefined
+    group_id: res.message_type === "group"? res.group_id:undefined,
+    auto_escape: res.auto_escape? true:false
   }
   // 如果 message_type 不是 group 或是 private，则输出错误并终止程序
   if (res.message_type !== 'group' && res.message_type !== 'private') {
     log.fatal(`makeResponse: message_type is out of range: ${res.message_type}`)
-  }
-  const echo: echo_types = {
-    type: "message",
-    // TODO: 未来要把这个字段开放出来
-    fallback: `消息被拦截了＞﹏＜,以下是被抢救的消息：\n\n${res.text.replaceAll(/(?<=\[CQ:(.*))(,(.*?))(?=\])/g, "")}`,
-    user_id: res.user_id,
-    message_type: res.message_type,
-    group_id: res.message_type === "group"? res.group_id:undefined
   }
   // 构建发送给 go-cqhttp 的消息主体
   const msg_send :object = {
@@ -266,8 +275,8 @@ function handleCallback(data :any) :void {
           log.error(`callback:${data.status}, retcode:${data.retcode}, reply:${echoIncome.user_id}, type:${echoIncome.type}, info:${data.wording}`)
           if (echoIncome.type !== "noreply" && echoIncome.fallback) {
             // 将 fallback 内的消息发送回去
-            const msg_params :msg_params_types = {
-              message: echoIncome.fallback,
+            const msg_params :msg_response_types = {
+              text: echoIncome.fallback,
               user_id: echoIncome.user_id,
               message_type: echoIncome.message_type,
               group_id: echoIncome.group_id? echoIncome.group_id:undefined,
@@ -279,14 +288,7 @@ function handleCallback(data :any) :void {
               message_type: echoIncome.message_type,
               group_id: echoIncome.group_id? echoIncome.group_id:undefined
             }
-            // 构建发送给 go-cqhttp 的消息主体
-            const msg_send :object = {
-              "action": "send_msg" as string,
-              "params": msg_params as msg_params_types,
-              "echo": JSON.stringify(echo)
-            }
-            //通过 WebSocket 发送消息给 go-cqhttp
-            client.send(JSON.stringify(msg_send))
+            makeResponse(msg_params, echo)
           }
         }
       } else {
@@ -310,8 +312,8 @@ function handleNotify(data :any) :void {
     case"poke":
       // 戳一戳
       if (data.self_id === data.target_id) {
-        const msg_params :msg_params_types = {
-          message: `[CQ:poke,qq=${data.sender_id}]`,
+        const msg_params :msg_response_types = {
+          text: `[CQ:poke,qq=${data.sender_id}]`,
           user_id: data.sender_id,
           message_type: data.group_id? "group":"private",
           group_id: data.group_id? data.group_id:undefined
@@ -322,14 +324,7 @@ function handleNotify(data :any) :void {
           message_type: data.group_id? "group":"private",
           group_id: data.group_id? data.group_id:undefined
         }
-        // 构建发送给 go-cqhttp 的消息主体
-        const msg_send :object = {
-          "action": "send_msg" as string,
-          "params": msg_params as msg_params_types,
-          "echo": JSON.stringify(echo)
-        }
-        //通过 WebSocket 发送消息给 go-cqhttp
-        client.send(JSON.stringify(msg_send))
+        makeResponse(msg_params, echo)
       }
       break
 
@@ -350,8 +345,8 @@ function handleNotify(data :any) :void {
  */
 export function adminNotify(msg :string) :void {
   for (const QQid of config.adminQQ) {
-    const msg_params :msg_params_types = {
-      message: `${msg}\n(for Admin) ${config.debug? "(Dev mode)":""}`,
+    const msg_params :msg_response_types = {
+      text: `${msg}\n(for Admin) ${config.debug? "(Dev mode)":""}`,
       user_id: QQid,
       message_type: "private"
     }
@@ -360,13 +355,6 @@ export function adminNotify(msg :string) :void {
       user_id: QQid,
       message_type: "private"
     }
-    // 构建发送给 go-cqhttp 的消息主体
-    const msg_send :object = {
-      "action": "send_msg" as string,
-      "params": msg_params as msg_params_types,
-      "echo": JSON.stringify(echo)
-    }
-    //通过 WebSocket 发送消息给 go-cqhttp
-    client.send(JSON.stringify(msg_send))
+    makeResponse(msg_params, echo)
   }
 }

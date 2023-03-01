@@ -61,6 +61,3 @@ async function handleStop(code) {
 // 当插件以异常状态停止时（如 process.exit(2) ），
 // 插件管理器将在 3s 后自动重启该插件
 // 插件直接输出的内容( console.log() )将和主程序共用一个输出
-
-//TODO:
-// 插件正常退出( process.exit(0) )会被判定为错误退出而触发重启

@@ -12,12 +12,14 @@ export interface msg_types {
 /**
  * 用于定义用于存储回复消息的变量
  * 
+ * auto_escape 在 onebot api 中未出现，这里为了方便传入额外添加（默认行为：false）
  */
 export interface msg_response_types {
   message_type :string,
   text :string,
   user_id :number,
   group_id? :number
+  auto_escape? :boolean
 }
 
 /**
@@ -30,6 +32,18 @@ export interface msg_params_types {
   group_id? :number,
   message :string,
   auto_escape? :boolean
+}
+
+/**
+ * 发送消息的echo字段的类型
+ * 
+ */
+export interface echo_types {
+  type: "message" | "admin" | "noreply"
+  fallback?: string // 消息发送失败时发送的字符，之后要开放给 handler.ts 等，目前只是强制转换
+  user_id: number
+  message_type: string
+  group_id?: number
 }
 
 /**

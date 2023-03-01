@@ -1,4 +1,4 @@
-import { gokapiReply_types } from "./types.js"
+import type { gokapiReply_types } from "./types.js"
 import config from "../botconfig.js"
 import { log } from "./logger.js"
 import { createCanvas } from "canvas"

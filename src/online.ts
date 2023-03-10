@@ -97,7 +97,7 @@ class OnlineQueryClass implements OnlineQuery_types {
       if (spliter[spliterlen - 2] === 'is') {      // 以字符组中是否包含 is 为判据判断是否在线
         let name_raw :string = spliter.slice(2, -2).join(' ')  // 去头去尾并拼接字符，防止因 id 中含有空格而造成错误
         // 拼接当前查询结果并存储在临时查询结果存储中
-        this._reply = this._reply + `\n${name_raw.slice(1, name_raw.indexOf("https://osu") - 2)} (${spliter[spliterlen - 1].slice(0, -1)})`
+        this._reply = this._reply + `<br>${name_raw.slice(1, name_raw.indexOf("https://osu") - 2)} (${spliter[spliterlen - 1].slice(0, -1)})`
       }
     }
 
@@ -116,7 +116,7 @@ class OnlineQueryClass implements OnlineQuery_types {
       log.debug(`getOSUStats: end of querying ${this._counter} players`)
       const now = new Date() // 用于输出查询时时间，和判断是否需要使用“卷王”称号
       // 将最终查询结果转存入查询结果变量中
-      this.results = `${now.getHours() > 22 || now.getHours() < 4 ? '卷王列表':'在线列表'}（更新时间 ${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours().toLocaleString('en-US',{minimumIntegerDigits: 2})}:${now.getMinutes().toLocaleString('en-US',{minimumIntegerDigits: 2})}）：${this._reply}\n-----`
+      this.results = `${now.getHours() > 22 || now.getHours() < 4 ? '卷王列表':'在线列表'}（更新时间 ${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours().toLocaleString('en-US',{minimumIntegerDigits: 2})}:${now.getMinutes().toLocaleString('en-US',{minimumIntegerDigits: 2})}）：${this._reply}<br>-----`
       // 清空临时查询变量内内容
       this._counter = 0
       this._reply = ""
@@ -153,7 +153,10 @@ class OnlineQueryClass implements OnlineQuery_types {
     } else if (appStatus.isQuery) {
       // 如果撞锁多次，则强制停止程序
       if (this._busyCounter > 1) {
-        log.fatal('askBancho: cannot start because isQuery = true, exit.')
+        log.error('askBancho: cannot start because isQuery = true, trying to restore...')
+        await stopIRC()
+        await new Promise(f => setTimeout(f, 10 * 1000))
+        await startIRC()
       } else {
         this._busyCounter = this._busyCounter + 1
         log.warn(`askBancho: cannot start because isQuery = true, counter ${this._busyCounter}`)
@@ -216,7 +219,7 @@ export function getOSUStats() :Promise<string> {
   return new Promise((resolve, reject) => {
   // 判断 statsResult 是否为空，一般为程序首次运行时过早提交查询请求
   if (queryer[0].results !== '') {
-    resolve(`${queryer[0].results}${appStatus.isMP? "\n（注意：因正在主持多人游戏，查询已暂停）":""}`)
+    resolve(`${queryer[0].results}${appStatus.isMP? "<br>（注意：因正在主持多人游戏，查询已暂停）":""}`)
   } else {
     log.error('getOSUStats: statsResult is empty')
     reject('获取在线列表失败，请尝试执行命令：“/在线 更新”！')

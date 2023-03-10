@@ -1,6 +1,6 @@
 import child_process from 'child_process'
 import { appStatus } from "./app.js"
-import { text2img } from "./utils.js"
+import { renderDefault } from './render/_middleware.js'
 import { log } from "./logger.js"
 import { stopIRC, startIRC } from "./online.js"
 import config from "../botconfig.js"
@@ -101,37 +101,47 @@ class osuahrClass implements osuahr_types {
       case "h":
       case "帮助":
         const reply :string =
-  `
-  狗勾机器人(Kreee bot)自动多人游戏房间主持命令：
-  （默认为房主自动轮换，命令仅支持群聊中触发）\n
-  /mp help             输出该帮助信息\n
-  /mp status           输出当前机器人多人游戏状态\n
-  /mp make [房间名]    开一个指定名字的房间（可能不支持中文）并主持\n
-  /mp close            （在所有人离开房间后）关闭当前房间\n
-  /mp run [命令]       以管理员权限运行指定命令
-      命令详情可以参考：https://github.com/Meowhal/osu-ahr
-      下面列出常用命令：
-          房主设置：
-          *start  强制开始
-          *skip   强制跳过当前房主
-          房间设置：
-          *keep size [1-16]      设置房间大小
-          *keep password [密码]  设置房间密码
-          谱面设置：
-          *regulation min_star [数字]  谱面最小星数
-          *regulation max_star [数字]  谱面最大星数
-          *regulation min_length [秒]  谱面最短时间 
-          *regulation max_length [秒]  谱面最长时间
-          *regulation gamemode [osu|taiko|fruits|mania] 谱面模式
-          *regulation allow_convert    允许转谱出现
-          *regulation disallow_convert 不允许转谱出现
-  `
-        resolve(text2img(reply))
+                              `
+                              狗勾机器人(Kreee bot)自动多人游戏房间主持命令：<br>
+                              （默认为房主自动轮换，命令仅支持群聊中触发）<br>
+                              <table>
+                              <tr> <td> /mp help </td> <td> 输出该帮助信息 </td> </tr>
+                              <tr> <td> /mp status </td> <td> 输出当前机器人多人游戏状态 </td> </tr>
+                              <tr> <td> /mp make [房间名] </td> <td> 开一个指定名字的房间（可能不支持中文）并主持 </td> </tr>
+                              <tr> <td> /mp close </td> <td> 关闭当前房间（在所有人离开房间后） </td> </tr>
+                              <tr> <td> /mp run [命令] </td> <td> 以管理员权限运行指定命令 </td> </tr>
+                              </table>
+                              管理员常用命令：<br>
+                              命令详情可以参考：https://github.com/Meowhal/osu-ahr
+                              <table>
+                              <tr><td> 房主设置：</td></tr>
+                              <tr> <td> *start </td> <td> 强制开始 </td> </tr>
+                              <tr> <td> *skip </td> <td> 强制跳过当前房主 </td> </tr>
+                              <tr><td>房间设置：</td></tr>
+                              <tr> <td> *keep size [1-16] </td> <td> 设置房间大小 </td> </tr>
+                              <tr> <td> *keep password [密码] </td> <td> 设置房间密码 </td> </tr>
+                              <tr><td>谱面设置：</td></tr>
+                              <tr> <td> *regulation min_star [数字] </td> <td> 谱面最小星数 </td> </tr>
+                              <tr> <td> *regulation max_star [数字] </td> <td> 谱面最大星数 </td> </tr>
+                              <tr> <td> *regulation min_length [秒] </td> <td> 谱面最短时间 </td> </tr>
+                              <tr> <td> *regulation max_length [秒] </td> <td> 谱面最长时间 </td> </tr>
+                              <tr> <td> *regulation gamemode [osu|taiko|fruits|mania] </td> <td> 谱面模式 </td> </tr>
+                              <tr> <td> *regulation allow_convert </td> <td> 允许转谱出现 </td> </tr>
+                              <tr> <td> *regulation disallow_convert </td> <td> 不允许转谱出现 </td> </tr>
+                              </table>
+                              `
+        renderDefault(reply)
+          .then((url) => {
+            resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+          })
         break
   
       case "status":
-        const status :string =`是否正在主持多人游戏：${appStatus.isMP? "是":"否"}\n${appStatus.isMP? `房间名：${osuahr[0].roomName}`:""}`
-        resolve(text2img(status))
+        const status :string =`是否正在主持多人游戏：${appStatus.isMP? "是":"否"}<br>${appStatus.isMP? `房间名：${osuahr[0].roomName}`:""}`
+        renderDefault(status)
+          .then((url) => {
+            resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+          })
         break
   
       case "make":
@@ -144,7 +154,10 @@ class osuahrClass implements osuahr_types {
           appStatus.isMP = true
           await stopIRC()
           osuahr.push(new osuahrClass(room))
-          resolve(text2img(`注意：主持多人游戏期间查询在线功能将暂停！\n5s 后开始创建房间并主持：${osuahr[0].roomName}`))
+          renderDefault(`注意：主持多人游戏期间查询在线功能将暂停！<br>5s 后开始创建房间并主持：${osuahr[0].roomName}`)
+            .then((url) => {
+              resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+            })
           setTimeout(() => {
             osuahr[0].start()
               .then(() => {
@@ -153,7 +166,10 @@ class osuahrClass implements osuahr_types {
             log.info(`osu-ahr: make room: ${osuahr[0].roomName}`)
           }, 2000)
         } else {
-          resolve(text2img(`创建失败：\n正在主持多人游戏，房间名：${osuahr[0].roomName}`))
+          renderDefault(`创建失败：<br>正在主持多人游戏，房间名：${osuahr[0].roomName}`)
+            .then((url) => {
+              resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+            })
         }
         break
   
@@ -180,7 +196,10 @@ class osuahrClass implements osuahr_types {
             return
           }
           osuahr[0].send(command)
-          resolve(text2img(`尝试执行命令：${command}`))
+          renderDefault(`尝试执行命令：${command}`)
+            .then((url) => {
+              resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+            })
         } else {
           resolve("未开始主持多人游戏，请使用“/mp make [房间名]”来创建房间！")
         }

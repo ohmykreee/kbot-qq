@@ -1,5 +1,5 @@
 import config from "../botconfig.js"
-import { text2img } from "./utils.js"
+import { renderAdmin } from "./render/_middleware.js"
 import { log } from "./logger.js"
 import { handleExit } from "./app.js"
 import { pluginsLoad, pluginsUnload } from "./plugin.js"
@@ -23,19 +23,22 @@ export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
       case "help":
       case "h":
       case "帮助":
-        reply = 
-  `
-  狗勾机器人(Kreee bot)管理员命令：
-  （仅支持管理员私聊机器人时触发）\n
-  /kbot help                                输出该帮助信息\n
-  /kbot restart                             以异常状态停止程序并等待 daemon 重启程序\n
-  /kbot stop                                无退出码停止程序，如果程序此前有异常则会被 daemon 重启\n
-  /kbot reload                              重载所有插件\n
-  /kbot log [数字]                          获取最近指定数目的日志\n
-  /kbot dbadd/dbrm [数据库名] [字符串]       数据库增减操作\n
-  /kbot dblist [数据库名]                    返回该数据库的所有内容
-  `
-        resolve(text2img(reply))
+        reply = `
+              狗勾机器人(Kreee bot)管理员命令：<br>
+              （仅支持管理员私聊机器人时触发）<br>
+              <table>
+              <tr> <td> /kbot help </td> <td> 输出该帮助信息 </td> </tr>
+              <tr> <td> /kbot restart </td> <td> 以异常状态停止程序并等待 daemon 重启程序 </td> </tr>
+              <tr> <td> /kbot stop </td> <td> 无退出码停止程序，如果程序此前有异常则会被 daemon 重启 </td> </tr>
+              <tr> <td> /kbot reload </td> <td> 重载所有插件 </td> </tr>
+              <tr> <td> /kbot log [数字] </td> <td> 获取最近指定数目的日志 </td> </tr>
+              <tr> <td> /kbot dbadd/dbrm [数据库名] [字符串] </td> <td> 数据库增减操作 </td> </tr>
+              <tr> <td> /kbot dblist [数据库名] </td> <td> 返回该数据库的所有内容 </td> </tr>
+            </table>`
+          renderAdmin(reply)
+            .then((url) => {
+              resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+            })
         break
       
       case "restart":
@@ -59,9 +62,12 @@ export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
         log.readLog(count)
           .then((logs) => {
             logs.map((log) => {
-              reply = reply + `${log}\n`
+              reply = reply + `${log}<br>`
             })
-            resolve(text2img(reply))
+            renderAdmin(reply)
+              .then((url) => {
+                resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+              })
           })
           .catch((error) => {
             log.error(`readLog: ${error.toString()}`)
@@ -85,15 +91,24 @@ export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
           if (["osu", "food", "vw50"].includes(dbName)) {
             if (msg[1] === "dbadd" && value) {
               await db.push(dbName, value)
-              resolve(text2img(`已在数据库 ${dbName} 中添加 ${value}`))
+              renderAdmin(`已在数据库 ${dbName} 中添加 ${value}`)
+                .then((url) => {
+                  resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+                })
             } else if(msg[1] === "dbrm"  && value){
               await db.rm(dbName, value)
-              resolve(text2img(`已在数据库 ${dbName} 中删除 ${value}`))
+              renderAdmin(`已在数据库 ${dbName} 中删除 ${value}`)
+                .then((url) => {
+                  resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+                })
             } else {
               const data = await db.read(dbName)
-              let reply :string = `${dbName}\n------\n`
-              data.map((e) => reply = `${reply}${e}\n`)
-              resolve(text2img(reply))
+              let reply :string = `${dbName}<br>------<br>`
+              data.map((e) => reply = `${reply}${e}<br>`)
+              renderAdmin(reply)
+                .then((url) => {
+                  resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+                })
             }
           } else {
             resolve("错误：不正确的数据库名（osu、food、vw50）！")

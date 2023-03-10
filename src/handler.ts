@@ -1,11 +1,11 @@
 import axios from "axios"
 import config from "../botconfig.js"
 import { log } from "./logger.js"
-import { JSDOM } from "jsdom"
 import db from "./db.js"
 import info from '../package.json' assert { type: "json" }
 import { getOSUStats, updateOSUStats } from "./online.js"
-import { text2img, getOsuToken, uploadToGokapi } from "./utils.js"
+import { getOsuToken, uploadToGokapi } from "./utils.js"
+import { renderDefault, renderTweets, renderScore } from "./render/_middleware.js"
 import { randomBytes } from "crypto"
 
 /**
@@ -30,27 +30,32 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
       case "help":
       case "h":
       case "帮助":
-        reply = 
-  `狗勾机器人(Kreee bot)主菜单命令：
-  （电脑 QQ 建议关闭 “使用快捷键输入表情”功能）\n
-  /help                                输出该帮助信息\n
-  /ping                                康康机器人有没有在摸鱼\n
-  /关于                                关于这个机器人的一切\n
-  /在线                                返回 osu! 查询列表里在线玩家\n
-  /在线 列表                           返回 osu! 在线查询列表里的所有人\n
-  /在线 添加                           添加一项至 osu! 在线查询列表\n
-  /在线 更新                           立即请求一次 osu! 在线列表的更新\n
-  /吃什么                              不知道今天中午/晚上吃什么？问我！\n
-  /星期四                              星期四？想什么呢！\n
-  /抽一张 [tag(可选)]                  抽一张 Pixiv 图（docs.anosu.top）\n
-  /推 [推特ID]                         返回最新的一条推文（且用且珍惜）\n
-  /推图 [推特ID]                       返回最新的一条带图片推文（且用且珍惜）\n
-  /img [图片]                          上传图片并生成链接（记得/img后面要加空格）\n
-  /re [osu!用户名] :[模式数字(可选)]    猫猫机器人崩了用这个备用（只能返回简单数据）\n
-  /pr [osu!用户名] :[模式数字(可选)]    猫猫机器人崩了用这个备用（只能返回简单数据）\n
-  /mp [命令]                           自动房主的多人房间，建议先使用"/mp help" 了解更多\n
+        reply = `
+                  狗勾机器人(Kreee bot)主菜单命令：<br>
+                （电脑 QQ 建议关闭 “使用快捷键输入表情”功能）<br>
+                <table>
+                  <tr> <td> /help </td> <td> 输出该帮助信息 </td> </tr>
+                  <tr> <td> /ping </td> <td> 康康机器人有没有在摸鱼 </td> </tr>
+                  <tr> <td> /关于 </td> <td> 关于这个机器人的一切 </td> </tr>
+                  <tr> <td> /在线 </td> <td> 返回 osu! 查询列表里在线玩家 </td> </tr>
+                  <tr> <td> /在线 列表 </td> <td> 返回 osu! 在线查询列表里的所有人 </td> </tr>
+                  <tr> <td> /在线 添加 </td> <td> 添加一项至 osu! 在线查询列表 </td> </tr>
+                  <tr> <td> /在线 更新 </td> <td> 立即请求一次 osu! 在线列表的更新 </td> </tr>
+                  <tr> <td> /吃什么 </td> <td> 不知道今天中午/晚上吃什么？问我！ </td> </tr>
+                  <tr> <td> /星期四 </td> <td> 星期四？想什么呢！ </td> </tr>
+                  <tr> <td> /抽一张 [tag(可选)] </td> <td> 抽一张 Pixiv 图（docs.anosu.top） </td> </tr>
+                  <tr> <td> /推 [推特ID] </td> <td> 返回最新的一条推文（且用且珍惜） </td> </tr>
+                  <tr> <td> /推图 [推特ID] </td> <td> 返回最新的一条带图片推文（且用且珍惜） </td> </tr>
+                  <tr> <td> /img [图片] </td> <td> 上传图片并生成链接（记得/img后面要加空格） </td> </tr>
+                  <tr> <td> /re [osu!用户名] :[模式数字(可选)] </td> <td> 猫猫机器人崩了用这个备用（只能返回简单数据） </td> </tr>
+                  <tr> <td> /pr [osu!用户名] :[模式数字(可选)] </td> <td> 猫猫机器人崩了用这个备用（只能返回简单数据） </td> </tr>
+                  <tr> <td> /mp [命令] </td> <td> 自动房主的多人房间，建议先使用"/mp help" 了解更多 </td> </tr>
+                </table>
   `
-        resolve(text2img(reply))
+        renderDefault(reply)
+          .then((url) => {
+            resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+          })
         break
       
       case "关于":
@@ -67,13 +72,16 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
       case "在线":
         switch (msg[1]) {
           case "列表":
-            reply = "查询列表（排名不分先后）\n"
+            reply = "查询列表（排名不分先后）<br>"
             const osuname = await db.read("osu")
             osuname.map((name) => {
-              reply = reply + `${name}\n`
+              reply = reply + `${name}<br>`
             })
             reply = reply + `（共 ${osuname.length} 项）`
-            resolve(text2img(reply))
+            renderDefault(reply)
+              .then((url) => {
+                resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+              })
             break
 
           case "更新":
@@ -118,7 +126,10 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
               })
               .catch((error) => {
                 if (error.response && error.response.status === 404) {
-                  resolve(text2img(`未找到该玩家：${user}`))
+                  renderDefault(`未找到该玩家：${user}`)
+                    .then((url) => {
+                      resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+                    })
                 } else {
                   log.error(`add-queryer: when get user-id: ${error.toString()}`)
                   resolve("发生非致命错误，已上报给管理员。")
@@ -130,7 +141,10 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
             // 运行 online.ts 中的 getOSUStats() 获取回复消息内容
             getOSUStats()
               .then((replytext) => {
-                resolve(text2img(replytext))
+                renderDefault(replytext)
+                  .then((url) => {
+                    resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+                  })
               })
               .catch((replytext) => {
                 resolve(replytext.toString())
@@ -167,30 +181,11 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
           resolve("请输入有效的ID！")
         }
         axios.get(twitterUrl)
-          .then(res => {
-            const rssDoc = new JSDOM(res.data, {contentType: 'application/xml'})
-            const item = rssDoc.window.document.getElementsByTagName('item').item(0) as Element
-            // 准备推文内容
-            let user :string = rssDoc.window.document.getElementsByTagName('title').item(0)?.innerHTML as string
-            let content :string = item.getElementsByTagName('title').item(0)?.innerHTML as string
-            // 判断是否为转推，是则加上被转推的对象
-            if (content.indexOf("RT by") === 0) {
-              let RTuser :string = item.getElementsByTagName('dc:creator').item(0)?.innerHTML as string
-              content = `（转推自 ${RTuser}）\n` + content
-            }
-            // 处理时间，并将 GMT 转换为当前时区
-            const pubDateGMT :string = item.getElementsByTagName('pubDate').item(0)?.innerHTML as string
-            const pubDate :string = new Date(Date.parse(pubDateGMT)).toLocaleString('zh-CN')
-            // 组装文字主体（又被风控了捏，用 text2img）
-            reply = text2img(`${user}\n>>>>>\n\n${content}\n\n<<<<<\n（发布时间：${pubDate}）`)
-            // 检测是否含图片（视频放弃检测）
-            if (item.getElementsByTagName('description').item(0)?.innerHTML.match(/<img[^>]+src="([^">]+)"/gm)) {
-              const imgs = item.getElementsByTagName('description').item(0)?.innerHTML.match(/<img[^>]+src="([^">]+)"/gm)
-              for (const img of imgs!) {
-                reply = reply + `\n[CQ:image,file=${img.slice(10, -1)}]`
-              }
-            }
-            resolve(reply)
+          .then( res => {
+            renderTweets(res.data)
+              .then((url) => {
+                resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+              })
           })
           .catch((error) => {
             if (error.response && error.response.status === 404) {
@@ -280,40 +275,10 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
             })
               .then (res => {
                 if (!(res.data.length === 0)) {
-                  const recent = res.data[0]
-                  let noteCount :string = ""
-                  switch (recent.mode) {
-                    case "osu":
-                      noteCount = `\t300: ${recent.statistics.count_300}\n\t100: ${recent.statistics.count_100}\n\t50: ${recent.statistics.count_50}\n\tmiss: ${recent.statistics.count_miss}`
-                      break
-                    case "taiko":
-                      noteCount = `\tgreat: ${recent.statistics.count_300}\n\tgood: ${recent.statistics.count_100}\n\tbad: ${recent.statistics.count_50}\n\tmiss: ${recent.statistics.count_100}`
-                      break
-                    case "fruits":
-                      noteCount = `\tfruit: ${recent.statistics.count_300}\n\tdrop: ${recent.statistics.count_100}\n\tdroplet: ${recent.statistics.count_50}\n\tdroplet miss: ${recent.statistics.count_katu}\n\tmiss: ${recent.statistics.count_miss}`
-                      break
-                    case "mania":
-                      noteCount = `\tmax: ${recent.statistics.count_geki}\n\tperfect: ${recent.statistics.count_300}\n\tgreat: ${recent.statistics.count_katu}\n\tgood: ${recent.statistics.count_100}\n\tbad: ${recent.statistics.count_50}\n\tmiss: ${recent.statistics.count_miss}`
-                      break
-                  }
-                  let reply :string = 
-  `
-  ${recent.user.username} (mode: ${recent.mode})
-  \n----------\n
-  谱面信息：
-      ${recent.beatmapset.title} [${recent.beatmap.status}]
-      ${recent.beatmap.version} (${recent.beatmap.difficulty_rating}*)
-      (地址：${recent.beatmap.url})
-  \n----------\n
-  表现信息：
-      得分：${recent.score}
-      准度：${Math.floor(recent.accuracy * 100000) / 1000}% (Rank: ${recent.rank})
-      pp: ${recent.pp? recent.pp:"未 Ranked 或非最佳成绩"}
-      Combos: ${recent.max_combo} ${recent.mods.length > 0? `\nmods：${recent.mods.toString()}`:""}
-  \n----------\n
-  ${noteCount}
-  `
-                  resolve(text2img(reply))
+                  renderScore(res.data)
+                    .then((url) => {
+                      resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+                    })
                 } else {
                   resolve(`${user} 最近还没有打过图哦...`)
                 }
@@ -325,7 +290,10 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
             })
             .catch((error) => {
               if (error.response && error.response.status === 404) {
-                resolve(text2img(`未找到该账户：${user}`))
+                renderDefault(`未找到该账户：${user}`)
+                  .then((url) => {
+                    resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+                  })
               } else {
                 log.error(`osu-score: when get user-id: ${error.toString()}`)
                 resolve("发生非致命错误，已上报给管理员。")

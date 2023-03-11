@@ -63,7 +63,7 @@ const getHTML = (content: string): string => {
     }
     .main {
       flex-grow: 1;
-      margin: 1rem 1.5rem;
+      margin: 1rem 2rem;
     }
     .info {
       margin: 1rem 0;

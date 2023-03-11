@@ -4,8 +4,65 @@ import { log } from "./logger.js"
 import axios from "axios"
 import FormData from "form-data"
 
+class OsuTokenClass {
+  constructor() {
+    // 给予空的初始值，在 get() 调用时判断是否为空，空则立马获取 token
+    this._currToken = ""
+    this._invalidUntil = Date.now()
+    this.get = this.get
+  }
+
+  private _currToken: string
+  private _invalidUntil: number
+
+  get(): Promise<string> {
+    return new Promise((resolve) => {
+      if (!this._currToken || Date.now() > this._invalidUntil) {
+        log.debug("osu-get-token: refreshing token...")
+        this._refresh()
+          .then(res => {
+            this._currToken = res.token
+            this._invalidUntil = res.invalid
+            resolve(this._currToken)
+          })
+          .catch((error) => {
+            log.error(error.toString())
+          })
+      } else {
+        resolve(this._currToken)
+      }
+    })
+  }
+
+  /**
+   * 刷新 osu!api token
+   *
+   * @remarks
+   * 文档 {@link https://osu.ppy.sh/docs/index.html#client-credentials-grant}，适用范围仅为 public
+   *
+   * @return Promise<{token: string, invalid: number}>，token 为刷新后的token, invalid 为失效时间的 UNIX 时间戳
+   * 
+   * @private
+   */
+  private _refresh() :Promise<{token: string, invalid: number}> {
+    return new Promise((resolve, reject) => {
+      axios.post("https://osu.ppy.sh/oauth/token", {
+        client_id: config.osuClientId,
+        client_secret: config.osuClientSecret,
+        grant_type: "client_credentials",
+        scope: "public"
+      })
+        .then(res => {
+          resolve({token: res.data.access_token, invalid: Date.now() + res.data.expires_in})
+        })
+        .catch(error => {
+          reject(`osu-get-token: ${error.toString()}`)
+        })
+    })
+  }
+}
 /**
- * 获取 osu!api token
+ * 获取 osu!api token，使用 get() 命令获取
  *
  * @remarks
  * 文档 {@link https://osu.ppy.sh/docs/index.html#client-credentials-grant}，适用范围仅为 public
@@ -13,23 +70,7 @@ import FormData from "form-data"
  * @return Promise<string>，返回值为 osu!api token 字符串
  * 
  */
-export function getOsuToken() :Promise<string> {
-  return new Promise((resolve, reject) => {
-    axios.post("https://osu.ppy.sh/oauth/token", {
-      client_id: config.osuClientId,
-      client_secret: config.osuClientSecret,
-      grant_type: "client_credentials",
-      scope: "public"
-    })
-      .then(res => {
-        resolve(res.data.access_token)
-      })
-      .catch((error) => {
-        log.error(`osu-get-token: ${error.toString()}`)
-        reject(error)
-      })
-  })
-}
+export const getOsuToken = new OsuTokenClass()
 
 /**
  * 上传文件至 Gokapi 实例

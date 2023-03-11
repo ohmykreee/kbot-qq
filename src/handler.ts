@@ -104,7 +104,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
               resolve('请输入有效的用户名！')
             }
             // 在线查询用户名是否存在
-            const token :string | void = await getOsuToken()
+            const token :string | void = await getOsuToken.get()
             if (!token) { resolve("发生非致命错误，已上报给管理员。") }
             axios.get(`https://osu.ppy.sh/api/v2/users/${user}`, {
               headers: {
@@ -179,6 +179,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
         // 判断推特ID是否存在
         if (!twitterId || !twitterId.match(/^[A-Za-z0-9_]+$/)) {
           resolve("请输入有效的ID！")
+          return
         }
         axios.get(twitterUrl)
           .then( res => {
@@ -257,9 +258,10 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
         // 判断是否存在用户名
         if (!user || !user.match(/^[A-Za-z0-9 \[\]_-]+$/)) {
           resolve('请输入有效的用户名！')
+          return
         }
         // 获取token
-        const token :string | void = await getOsuToken()
+        const token :string | void = await getOsuToken.get()
         if (!token) { resolve("发生非致命错误，已上报给管理员。") }
         axios.get(`https://osu.ppy.sh/api/v2/users/${user}`, {
           headers: {
@@ -305,12 +307,14 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
         if (!msg[1]) {
           reply = "未检测到图片，请在“/img ”命令后附带上图片后再次上传！"
           resolve(reply)
+          return
         } else {
           // 依据 “[CQ:” 拆分 CQ code 为 array,且只留下 image 对象
           const CQcodes :Array<string> = msg[1].split("[CQ:").filter(n => n.slice(0, 5) === "image")
           if (CQcodes.length !== 1) {
             reply = "格式不规范（上传了多张图片/上传了非图片内容），请重新确认后再次上传！"
             resolve(reply)
+            return
           } else {
             const codeParam = CQcodes[0].split(",")
             const imgUrl :string = codeParam[codeParam.length - 1].slice(4, -1)

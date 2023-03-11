@@ -3,6 +3,8 @@ import { uploadToGokapi } from '../utils.js'
 import { randomBytes } from "crypto"
 import { log } from "../logger.js"
 import axios from 'axios'
+import Zip from "adm-zip"
+import { Beatmap, Calculator } from "rosu-pp"
 
 // 输出用的 HTML 字符串
 // content 变量内容可参考 https://osu.ppy.sh/docs/index.html#get-user-scores
@@ -112,30 +114,81 @@ const getHTML = async (content: any[]): Promise<string> => {
       break
     }
 
-    try {
-      const res = await axios.get("https://api.yuzuai.xyz/osu/ppcalc", {params: {
-        "BeatmapID": recent.beatmap.id,
-        "Mode": recent.mode_int,
-        "Accuracy": recent.accuracy,
-        "Combo": recent.max_combo,
-        "C300": recent.statistics.count_300,
-        "C100": recent.statistics.count_100,
-        "C50": recent.statistics.count_50,
-        "Miss": recent.statistics.count_miss,
-        "Geki": recent.statistics.count_katu,
-        "Katu": recent.statistics.count_100,
-        "Mods": recent.mods? recent.mods.join(""):undefined,
-        "isPlay": true
-        }
-      })
+    // 计算 pp 所需要的每个 mod 对应数字：https://github.com/ppy/osu-api/wiki#mods
+    const modInt = {
+      "NF":1,
+      "EZ":2,
+      "TD":4,
+      "HD":8,
+      "HR":16,
+      "SD":32,
+      "DT":64,
+      "HT":256,
+      "NC":512,
+      "FL":1024,
+      "PF":16384,
+      "4K":32768,
+      "5K":65536,
+      "6K":131072,
+      "7K":262144,
+      "8K":524288,
+      "FI":1048576,
+      "9K":16777216,
+      "1K":67108864,
+      "3K":134217728,
+      "2K":268435456,
+      "MR":1073741824,
+    }
 
-      if (recent.pp) {
-        info.score.pp = `Live PP: ${recent.pp} / ${Math.floor(res.data.sspp)}`
-      } else {
-        info.score.pp = `PP: ${Math.floor(res.data.pp * 1000) / 1000} / ${Math.floor(res.data.sspp)}`
+    try {
+      const mapInfo = await (await axios.get(`https://api.chimu.moe/v1/map/${recent.beatmap.id}`)).data
+      if (mapInfo.DownloadPath) {
+        const oszFile = await (await axios.get(`https://api.chimu.moe${mapInfo.DownloadPath}`, { responseType: 'arraybuffer' })).data
+        if (oszFile) {
+          // 是个osz文件，需要解压！
+          const zipper = new Zip(oszFile)
+          const osuFile: Uint8Array = new Uint8Array(zipper.readFile(mapInfo.OsuFile)!)
+          // 开始计算
+          const map = new Beatmap({bytes: osuFile})
+          let mod: number = 0
+          for (const item of recent.mods) {
+            mod = mod + modInt[item as keyof typeof modInt]
+          }
+          const maxAttrs = new Calculator({
+            mode: recent.mode_int,
+            mods: mod,
+          }).performance(map)
+          const currAttrs = new Calculator({
+            mode: recent.mode_int,
+            mods: mod,
+            acc: recent.accuracy,
+            nGeki: recent.statistics.count_geki,
+            nKatu: recent.statistics.count_katu,
+            n300: recent.statistics.count_300,
+            n100: recent.statistics.count_100,
+            n50: recent.statistics.count_50,
+            nMisses: recent.statistics.count_miss,
+            combo: recent.max_combo,
+            passedObjects: recent.statistics.count_geki + recent.statistics.count_katu + recent.statistics.count_300 + recent.statistics.count_100 + recent.statistics.count_50 + recent.statistics.count_miss,
+          }).performance(map)
+          if (recent.pp) {
+            info.score.pp = `Live PP: ${recent.pp} / ${Math.floor(maxAttrs.pp)}`
+          } else {
+            info.score.pp = `PP: ${Math.floor(currAttrs.pp * 1000) / 1000} / ${Math.floor(maxAttrs.pp)}`
+          }
+        }
       }
-    } catch (e: any) {
-      log.error(`renderScore: calcPP: ${e.toString()}`)
+    } catch (error: any) {
+      log.error(`renderScore: calcPP: ${error.toString()}`)
+    } finally {
+      // 如果 pp 计算没有结果，就返回错误数据 N/A
+      if (!info.score.pp) {
+        if (recent.pp) {
+          info.score.pp = `Live PP: ${recent.pp} / N/A`
+        } else {
+          info.score.pp = `PP: N/A`
+        }
+      }
     }
    
     resolve(`

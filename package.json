@@ -1,6 +1,6 @@
 {
   "name": "kbot-qq",
-  "version": "2.8.2",
+  "version": "2.8.3",
   "description": "A Kreee's QQ bot written with TypeScript.",
   "type": "module",
   "exports": "./src/app.js",
@@ -30,7 +30,6 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
-    "adm-zip": "^0.5.10",
     "axios": "^1.3.2",
     "form-data": "^4.0.0",
     "install": "^0.13.0",

@@ -3,7 +3,6 @@ import { uploadToGokapi } from '../utils.js'
 import { randomBytes } from "crypto"
 import { log } from "../logger.js"
 import axios from 'axios'
-import Zip from "adm-zip"
 import { Beatmap, Calculator } from "rosu-pp"
 
 // 输出用的 HTML 字符串
@@ -141,23 +140,22 @@ const getHTML = async (content: any[]): Promise<string> => {
     }
 
     try {
-      const mapInfo = await (await axios.get(`https://api.chimu.moe/v1/map/${recent.beatmap.id}`)).data
-      if (mapInfo.DownloadPath) {
-        const oszFile = await (await axios.get(`https://api.chimu.moe${mapInfo.DownloadPath}`, { responseType: 'arraybuffer' })).data
-        if (oszFile) {
-          // 是个osz文件，需要解压！
-          const zipper = new Zip(oszFile)
-          const osuFile: Uint8Array = new Uint8Array(zipper.readFile(mapInfo.OsuFile)!)
-          // 开始计算
-          const map = new Beatmap({bytes: osuFile})
-          let mod: number = 0
-          for (const item of recent.mods) {
-            mod = mod + modInt[item as keyof typeof modInt]
-          }
-          const maxAttrs = new Calculator({
-            mode: recent.mode_int,
-            mods: mod,
-          }).performance(map)
+      const osuFile = await axios.get(`https://osu.ppy.sh/osu/${recent.beatmap.id}`, { responseType: 'arraybuffer' })
+      if (osuFile.data) {
+        // 开始计算
+        const map = new Beatmap({bytes: new Uint8Array(osuFile.data)})
+        let mod: number = 0
+        for (const item of recent.mods) {
+          mod = mod + modInt[item as keyof typeof modInt]
+        }
+        const maxAttrs = new Calculator({
+          mode: recent.mode_int,
+          mods: mod,
+        }).performance(map)
+        if (recent.pp) {
+          info.score.pp = `Live PP: ${Math.round(recent.pp * 1000) / 1000} / ${Math.round(maxAttrs.pp)}`
+        } else {
+          // 只有无官方 pp 时计算 pp，节约一丢丢性能
           const currAttrs = new Calculator({
             mode: recent.mode_int,
             mods: mod,
@@ -169,13 +167,9 @@ const getHTML = async (content: any[]): Promise<string> => {
             n50: recent.statistics.count_50,
             nMisses: recent.statistics.count_miss,
             combo: recent.max_combo,
-            passedObjects: recent.statistics.count_geki + recent.statistics.count_katu + recent.statistics.count_300 + recent.statistics.count_100 + recent.statistics.count_50 + recent.statistics.count_miss,
+            // passedObjects: recent.statistics.count_geki + recent.statistics.count_katu + recent.statistics.count_300 + recent.statistics.count_100 + recent.statistics.count_50 + recent.statistics.count_miss,
           }).performance(map)
-          if (recent.pp) {
-            info.score.pp = `Live PP: ${recent.pp} / ${Math.round(maxAttrs.pp)}`
-          } else {
-            info.score.pp = `PP: ${Math.round(currAttrs.pp * 1000) / 1000} / ${Math.round(maxAttrs.pp)}`
-          }
+          info.score.pp = `PP: ${Math.round(currAttrs.pp * 1000) / 1000} / ${Math.round(maxAttrs.pp)}`
         }
       }
     } catch (error: any) {
@@ -184,7 +178,7 @@ const getHTML = async (content: any[]): Promise<string> => {
       // 如果 pp 计算没有结果，就返回错误数据 N/A
       if (!info.score.pp) {
         if (recent.pp) {
-          info.score.pp = `Live PP: ${recent.pp} / N/A`
+          info.score.pp = `Live PP: ${Math.round(recent.pp * 1000) / 1000} / N/A`
         } else {
           info.score.pp = `PP: N/A`
         }

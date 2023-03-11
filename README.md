@@ -192,7 +192,7 @@ npm run build
 将会同时编译 `kbot-qq` 主体与所有插件为 js 文件于 `dist` 文件夹中。
 
 # 常见问题
-1. `text2img()`无法正确渲染中文等字体
+1. `render`模块无法正确渲染中文等字体
 
 > 参考：[Installing Asian Fonts on Ubuntu & Debian - AccuSoft](https://help.accusoft.com/PrizmDoc/v12.1/HTML/Installing_Asian_Fonts_on_Ubuntu_and_Debian.html)
 
@@ -203,14 +203,5 @@ sudo apt install language-pack-zh
 sudo apt install language-pack-ko
 sudo apt install fonts-arphic-ukai fonts-arphic-uming fonts-ipafont-mincho fonts-ipafont-gothic fonts-unfonts-core
 ```
-
-2. `text2img()`无法正确渲染 emoji
-
-如果使用 Ubuntu server 系统，可以尝试以下命令安装字体：
-```bash
-sudo apt install ttf-ancient-fonts
-```
-其他系统可以参考：[Any emoji support? - node-canvas](https://github.com/Automattic/node-canvas/issues/760)
-
 
 ~~屎山代码预警~~

@@ -67,7 +67,7 @@ const getHTML = async (content: any[]): Promise<string> => {
         rank: rankIcon[recent.rank as keyof typeof rankIcon],
         acc: Math.floor(recent.accuracy * 100000) / 1000,
         pp: "",
-        combos: recent.max_combo,
+        score: recent.score,
         detailed: ""
       }
     }
@@ -124,7 +124,7 @@ const getHTML = async (content: any[]): Promise<string> => {
         "Miss": recent.statistics.count_miss,
         "Geki": recent.statistics.count_katu,
         "Katu": recent.statistics.count_100,
-        "Mods": recent.mods? recent.mods.toString():undefined,
+        "Mods": recent.mods? recent.mods.join(""):undefined,
         "isPlay": true
         }
       })
@@ -259,8 +259,7 @@ const getHTML = async (content: any[]): Promise<string> => {
         border-right: 2px dashed #a7a7a7;
       }
       .score .detail table {
-        flex-grow: 1;
-        margin-left:auto;
+        margin:auto;
         border-collapse: separate; 
         border-spacing: 2rem 0;
         text-align: left;
@@ -274,7 +273,7 @@ const getHTML = async (content: any[]): Promise<string> => {
       .score .status .pp {
         flex-basis: 40%;
       }
-      .score .status .combos {
+      .score .status .others {
         flex-grow: 1;
       }
       .footer {
@@ -362,7 +361,7 @@ const getHTML = async (content: any[]): Promise<string> => {
               </div>
               <div class="status">
                 <p class="pp">${info.score.pp}</p>
-                <p class="combos">Max Combos: ${info.score.combos}</p>
+                <p class="others">Score: ${info.score.score}</p>
               </div>
             </div>
           

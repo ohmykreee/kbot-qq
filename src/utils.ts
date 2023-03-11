@@ -53,7 +53,7 @@ class OsuTokenClass {
         scope: "public"
       })
         .then(res => {
-          resolve({token: res.data.access_token, invalid: Date.now() + res.data.expires_in})
+          resolve({token: res.data.access_token, invalid: Date.now() + res.data.expires_in - 300}) // 提前 5 min 失效
         })
         .catch(error => {
           reject(`osu-get-token: ${error.toString()}`)

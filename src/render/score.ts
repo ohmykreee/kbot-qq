@@ -172,9 +172,9 @@ const getHTML = async (content: any[]): Promise<string> => {
             passedObjects: recent.statistics.count_geki + recent.statistics.count_katu + recent.statistics.count_300 + recent.statistics.count_100 + recent.statistics.count_50 + recent.statistics.count_miss,
           }).performance(map)
           if (recent.pp) {
-            info.score.pp = `Live PP: ${recent.pp} / ${Math.floor(maxAttrs.pp)}`
+            info.score.pp = `Live PP: ${recent.pp} / ${Math.round(maxAttrs.pp)}`
           } else {
-            info.score.pp = `PP: ${Math.floor(currAttrs.pp * 1000) / 1000} / ${Math.floor(maxAttrs.pp)}`
+            info.score.pp = `PP: ${Math.round(currAttrs.pp * 1000) / 1000} / ${Math.round(maxAttrs.pp)}`
           }
         }
       }

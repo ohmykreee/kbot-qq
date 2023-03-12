@@ -5,13 +5,9 @@ import { JSDOM } from "jsdom"
 import { log } from "../logger.js"
 
 // 输出用的 HTML 字符串
-const getHTML = (content: string): string => {
-  const dom = new JSDOM(content, {contentType: 'application/xml'})
-  const item = dom.window.document.getElementsByTagName("item").item(0)!
-  const publisher: string[] = dom.window.document.getElementsByTagName('title').item(0)!.innerHTML.split(" / ")
-  const title: string = item.getElementsByTagName('title').item(0)!.innerHTML
-  const pubDateGMT: string = item.getElementsByTagName('pubDate').item(0)?.innerHTML as string
-  const pubDate: string = new Date(Date.parse(pubDateGMT)).toLocaleString('zh-CN')
+const getHTML = (dom: JSDOM): string => {
+  const item = dom.window.document.getElementsByTagName("item")[0]
+  const publisher: string[] = dom.window.document.getElementsByTagName('title')[0].innerHTML.split(" / ")
   const info = {
     user: {
       nickname: publisher[0],
@@ -19,8 +15,8 @@ const getHTML = (content: string): string => {
       avatar: dom.window.document.getElementsByTagName("url").item(0)!.innerHTML
     },
     tweets: {
-      time: `${pubDate} UTC+8`,
-      retweet: (title.indexOf("RT by") === 0)? item.getElementsByTagName('dc:creator').item(0)!.innerHTML:undefined,
+      time: `${new Date(Date.parse(item.getElementsByTagName('pubDate')[0].innerHTML)).toLocaleString('zh-CN')} UTC+8`,
+      retweet: (item.getElementsByTagName('title')[0].innerHTML.indexOf("RT by") === 0)? item.getElementsByTagName('dc:creator').item(0)!.innerHTML:undefined,
       content: item.getElementsByTagName("description").item(0)!.innerHTML.replace("<![CDATA[", "").replace("]]>", "").replaceAll("style=", "")
     }
   }
@@ -207,15 +203,15 @@ const getHTML = (content: string): string => {
  * 渲染推文格式的图片
  *
  *
- * @param content - 需要渲染的内容，直接从 Nitter RSS 获取
+ * @param dom - 需要渲染的内容，处理过的 Nitter RSS DOM 元素。
  * 
  * @returns Promise<string>，返回值为结果图片的 Gokapi 的直链
  * 
  */
-export function renderTweets(content: string): Promise<string> {
+export function renderTweets(dom: JSDOM): Promise<string> {
   return new Promise((resolve) => {
     nodeHtmlToImage({
-      html: getHTML(content),
+      html: getHTML(dom),
       type: "png",
       encoding: "binary",
       transparent: true

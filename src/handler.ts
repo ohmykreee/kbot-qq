@@ -7,6 +7,7 @@ import { getOSUStats, updateOSUStats } from "./online.js"
 import { getOsuToken, uploadToGokapi } from "./utils.js"
 import { renderDefault, renderTweets, renderScore } from "./render/_middleware.js"
 import { randomBytes } from "crypto"
+import { JSDOM } from "jsdom"
 
 /**
  * 处理消息并返回回复消息字符串
@@ -44,8 +45,9 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
                   <tr> <td> /吃什么 </td> <td> 不知道今天中午/晚上吃什么？问我！ </td> </tr>
                   <tr> <td> /星期四 </td> <td> 星期四？想什么呢！ </td> </tr>
                   <tr> <td> /抽一张 [tag(可选)] </td> <td> 抽一张 Pixiv 图（docs.anosu.top） </td> </tr>
-                  <tr> <td> /推 [推特ID] </td> <td> 返回最新的一条推文（且用且珍惜） </td> </tr>
-                  <tr> <td> /推图 [推特ID] </td> <td> 返回最新的一条带图片推文（且用且珍惜） </td> </tr>
+                  <tr> <td> /推 [推特ID] </td> <td> 返回最新的一条推文 </td> </tr>
+                  <tr> <td> /推图 [推特ID] </td> <td> 返回最新的一条带图片推文 </td> </tr>
+                  <tr> <td> /推文 [推特URL] </td> <td> 返回该链接推文内容（仅支持最近几个推文） </td> </tr>
                   <tr> <td> /img [图片] </td> <td> 上传图片并生成链接（记得/img后面要加空格） </td> </tr>
                   <tr> <td> /re [osu!用户名] :[模式数字(可选)] </td> <td> 猫猫机器人崩了用这个备用（只能返回简单数据） </td> </tr>
                   <tr> <td> /pr [osu!用户名] :[模式数字(可选)] </td> <td> 猫猫机器人崩了用这个备用（只能返回简单数据） </td> </tr>
@@ -174,8 +176,8 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
 
       case "推":
       case "推图":
-        let twitterId :string = msg.slice(1).join(" ")
-        let twitterUrl :string = msg[0] === "推图"? `${config.nitterUrl}${twitterId}/media/rss`:`${config.nitterUrl}${twitterId}/rss`
+        const twitterId :string = msg.slice(1).join(" ")
+        const twitterUrl :string = msg[0] === "推图"? `${config.nitterUrl}${twitterId}/media/rss`:`${config.nitterUrl}${twitterId}/rss`
         // 判断推特ID是否存在
         if (!twitterId || !twitterId.match(/^[A-Za-z0-9_]+$/)) {
           resolve("请输入有效的ID！")
@@ -183,7 +185,8 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
         }
         axios.get(twitterUrl)
           .then( res => {
-            renderTweets(res.data)
+            const dom = new JSDOM(res.data, {contentType: "application/xml"})
+            renderTweets(dom)
               .then((url) => {
                 resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
               })
@@ -197,6 +200,42 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
             }
           })
           break
+
+        case "推文":
+          const path = new URL(msg[1]).pathname.split("/").filter(n => n)
+          // 判断推文链接是否有效，path[0] 为用户名，path[2] 为推文id
+          if (!(path[0].match(/^[A-Za-z0-9_]+$/) && path[1] === "status" && path[2])) {
+            resolve("请输入有效的推文链接！")
+            return
+          }
+          axios.get(`${config.nitterUrl}${path[0]}/rss`)
+            .then( res => {
+              const dom = new JSDOM(res.data, {contentType: "application/xml"})
+              // 删除不需要的 item，只保留所需要的 item
+              const itemsArray = [...dom.window.document.getElementsByTagName("item")]
+              itemsArray.map((item) => {
+                if (!item.getElementsByTagName("guid")[0].innerHTML.includes(path[2])) {
+                  item.parentNode?.removeChild(item)
+                }
+              })
+              if (!dom.window.document.getElementsByTagName("item")) {
+                resolve("好像没有找到指定推文，请确认是否为最近发布的推文...")
+                return
+              }
+              renderTweets(dom)
+                .then((url) => {
+                  resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+                })
+            })
+            .catch((error) => {
+              if (error.response && error.response.status === 404) {
+                resolve(`未找到该账户：@ ${twitterId}`)
+              } else {
+                log.error(`fetchTweets: ${error.toString()}`)
+                resolve("发生非致命错误，已上报给管理员。")
+              }
+            })
+            break
 
       case "抽一张":
         const tag: string = msg.slice(1).filter(key => !key.includes("[CQ:")).join(" ")

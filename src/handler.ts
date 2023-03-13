@@ -47,7 +47,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
                   <tr> <td> /抽一张 [tag(可选)] </td> <td> 抽一张 Pixiv 图（docs.anosu.top） </td> </tr>
                   <tr> <td> /推 [推特ID] </td> <td> 返回最新的一条推文 </td> </tr>
                   <tr> <td> /推图 [推特ID] </td> <td> 返回最新的一条带图片推文 </td> </tr>
-                  <tr> <td> /推文 [推特URL] </td> <td> 返回该链接推文内容（仅支持最近几个推文） </td> </tr>
+                  <tr> <td> /推文[#(可选)] [推特URL] </td> <td> 返回该链接推文内容（仅支持最近几个推文） </td> </tr>
                   <tr> <td> /img [图片] </td> <td> 上传图片并生成链接（记得/img后面要加空格） </td> </tr>
                   <tr> <td> /re [osu!用户名] :[模式数字(可选)] </td> <td> 猫猫机器人崩了用这个备用（只能返回简单数据） </td> </tr>
                   <tr> <td> /pr [osu!用户名] :[模式数字(可选)] </td> <td> 猫猫机器人崩了用这个备用（只能返回简单数据） </td> </tr>
@@ -57,6 +57,10 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
         renderDefault(reply)
           .then((url) => {
             resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+          })
+          .catch((error) => {
+            log.error(`renderDefault: ${error.toString()}`)
+            resolve("发生致命错误，已上报给管理员。")
           })
         break
       
@@ -83,6 +87,10 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
             renderDefault(reply)
               .then((url) => {
                 resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+              })
+              .catch((error) => {
+                log.error(`renderDefault: ${error.toString()}`)
+                resolve("发生致命错误，已上报给管理员。")
               })
             break
 
@@ -132,6 +140,10 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
                     .then((url) => {
                       resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
                     })
+                    .catch((error) => {
+                      log.error(`renderDefault: ${error.toString()}`)
+                      resolve("发生致命错误，已上报给管理员。")
+                    })
                 } else {
                   log.error(`add-queryer: when get user-id: ${error.toString()}`)
                   resolve("发生非致命错误，已上报给管理员。")
@@ -146,6 +158,10 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
                 renderDefault(replytext)
                   .then((url) => {
                     resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+                  })
+                  .catch((error) => {
+                    log.error(`renderDefault: ${error.toString()}`)
+                    resolve("发生致命错误，已上报给管理员。")
                   })
               })
               .catch((replytext) => {
@@ -190,6 +206,10 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
               .then((url) => {
                 resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
               })
+              .catch((error) => {
+                log.error(`renderTweets: ${error.toString()}`)
+                resolve("发生致命错误，已上报给管理员。")
+              })
           })
           .catch((error) => {
             if (error.response && error.response.status === 404) {
@@ -202,6 +222,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
           break
 
         case "推文":
+        case "推文#":
           const path = new URL(msg[1]).pathname.split("/").filter(n => n)
           // 判断推文链接是否有效，path[0] 为用户名，path[2] 为推文id
           if (!(path[0].match(/^[A-Za-z0-9_]+$/) && path[1] === "status" && path[2])) {
@@ -224,7 +245,11 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
               }
               renderTweets(dom)
                 .then((url) => {
-                  resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+                  resolve([`[CQ:image,file=${url}]${msg[0] === "推文#"? url:""}`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+                })
+                .catch((error) => {
+                  log.error(`renderTweets: ${error.toString()}`)
+                  resolve("发生致命错误，已上报给管理员。")
                 })
             })
             .catch((error) => {
@@ -320,6 +345,10 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
                     .then((url) => {
                       resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
                     })
+                    .catch((error) => {
+                      log.error(`renderScore: ${error.toString()}`)
+                      resolve("发生致命错误，已上报给管理员。")
+                    })
                 } else {
                   resolve(`${user} 最近还没有打过图哦...`)
                 }
@@ -334,6 +363,10 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
                 renderDefault(`未找到该账户：${user}`)
                   .then((url) => {
                     resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+                  })
+                  .catch((error) => {
+                    log.error(`renderDefault: ${error.toString()}`)
+                    resolve("发生致命错误，已上报给管理员。")
                   })
               } else {
                 log.error(`osu-score: when get user-id: ${error.toString()}`)

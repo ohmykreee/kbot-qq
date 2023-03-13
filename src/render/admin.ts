@@ -1,7 +1,6 @@
 import nodeHtmlToImage from 'node-html-to-image'
 import { uploadToGokapi } from '../utils.js'
 import { randomBytes } from "crypto"
-import { log } from "../logger.js"
 
 // 输出用的 HTML 字符串
 const getHTML = (content: string): string => {return(`
@@ -149,7 +148,7 @@ const getHTML = (content: string): string => {return(`
  * 
  */
 export function renderAdmin(content: string): Promise<string> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     nodeHtmlToImage({
       html: getHTML(content),
       type: "png",
@@ -162,12 +161,12 @@ export function renderAdmin(content: string): Promise<string> {
             if (res.hotlinkUrl) {
               resolve(res.hotlinkUrl)
             } else {
-              log.error(`ERROR: renderAdmin: empty hotlinkUrl from Gokapi!`)
+              reject(`uploadToGokapi: empty hotlinkUrl from Gokapi!`)
             }
           })
       })
       .catch((error) => {
-        log.error(`ERROR: renderAdmin: ${error.toString()}`)
+        reject(`htmlToImage: ${error.toString()}`)
       })
   })
 }

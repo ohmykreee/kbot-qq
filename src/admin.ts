@@ -39,6 +39,10 @@ export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
             .then((url) => {
               resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
             })
+            .catch((error) => {
+              log.error(`renderAdmin: ${error.toString()}`)
+              resolve("发生致命错误，已上报给管理员。")
+            })
         break
       
       case "restart":
@@ -68,6 +72,10 @@ export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
               .then((url) => {
                 resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
               })
+              .catch((error) => {
+                log.error(`renderAdmin: ${error.toString()}`)
+                resolve("发生致命错误，已上报给管理员。")
+              })
           })
           .catch((error) => {
             log.error(`readLog: ${error.toString()}`)
@@ -95,11 +103,19 @@ export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
                 .then((url) => {
                   resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
                 })
+                .catch((error) => {
+                  log.error(`renderAdmin: ${error.toString()}`)
+                  resolve("发生致命错误，已上报给管理员。")
+                })
             } else if(msg[1] === "dbrm"  && value){
               await db.rm(dbName, value)
               renderAdmin(`已在数据库 ${dbName} 中删除 ${value}`)
                 .then((url) => {
                   resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+                })
+                .catch((error) => {
+                  log.error(`renderAdmin: ${error.toString()}`)
+                  resolve("发生致命错误，已上报给管理员。")
                 })
             } else {
               const data = await db.read(dbName)
@@ -108,6 +124,10 @@ export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
               renderAdmin(reply)
                 .then((url) => {
                   resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+                })
+                .catch((error) => {
+                  log.error(`renderAdmin: ${error.toString()}`)
+                  resolve("发生致命错误，已上报给管理员。")
                 })
             }
           } else {

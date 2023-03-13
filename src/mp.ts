@@ -134,6 +134,10 @@ class osuahrClass implements osuahr_types {
           .then((url) => {
             resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
           })
+          .catch((error) => {
+            log.error(`renderDefault: ${error.toString()}`)
+            resolve("发生致命错误，已上报给管理员。")
+          })
         break
   
       case "status":
@@ -141,6 +145,10 @@ class osuahrClass implements osuahr_types {
         renderDefault(status)
           .then((url) => {
             resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+          })
+          .catch((error) => {
+            log.error(`renderDefault: ${error.toString()}`)
+            resolve("发生致命错误，已上报给管理员。")
           })
         break
   
@@ -158,6 +166,10 @@ class osuahrClass implements osuahr_types {
             .then((url) => {
               resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
             })
+            .catch((error) => {
+              log.error(`renderDefault: ${error.toString()}`)
+              resolve("发生致命错误，已上报给管理员。")
+            })
           setTimeout(() => {
             osuahr[0].start()
               .then(() => {
@@ -169,6 +181,10 @@ class osuahrClass implements osuahr_types {
           renderDefault(`创建失败：<br>正在主持多人游戏，房间名：${osuahr[0].roomName}`)
             .then((url) => {
               resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+            })
+            .catch((error) => {
+              log.error(`renderDefault: ${error.toString()}`)
+              resolve("发生致命错误，已上报给管理员。")
             })
         }
         break
@@ -199,6 +215,10 @@ class osuahrClass implements osuahr_types {
           renderDefault(`尝试执行命令：${command}`)
             .then((url) => {
               resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+            })
+            .catch((error) => {
+              log.error(`renderDefault: ${error.toString()}`)
+              resolve("发生致命错误，已上报给管理员。")
             })
         } else {
           resolve("未开始主持多人游戏，请使用“/mp make [房间名]”来创建房间！")

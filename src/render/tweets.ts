@@ -2,7 +2,6 @@ import nodeHtmlToImage from 'node-html-to-image'
 import { uploadToGokapi } from '../utils.js'
 import { randomBytes } from "crypto"
 import { JSDOM } from "jsdom"
-import { log } from "../logger.js"
 
 // 输出用的 HTML 字符串
 const getHTML = (dom: JSDOM): string => {
@@ -209,7 +208,7 @@ const getHTML = (dom: JSDOM): string => {
  * 
  */
 export function renderTweets(dom: JSDOM): Promise<string> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     nodeHtmlToImage({
       html: getHTML(dom),
       type: "png",
@@ -222,12 +221,12 @@ export function renderTweets(dom: JSDOM): Promise<string> {
             if (res.hotlinkUrl) {
               resolve(res.hotlinkUrl)
             } else {
-              log.error(`ERROR: renderTweets: empty hotlinkUrl from Gokapi!`)
+              reject(`uploadToGokapi: empty hotlinkUrl from Gokapi!`)
             }
           })
       })
       .catch((error) => {
-        log.error(`ERROR: renderTweets: ${error.toString()}`)
+        reject(`htmlToImage: ${error.toString()}`)
       })
   })
 }

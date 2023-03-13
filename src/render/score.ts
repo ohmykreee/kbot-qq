@@ -481,7 +481,7 @@ const getHTML = async (content: any[]): Promise<string> => {
  * 
  */
 export function renderScore(content: any): Promise<string> {
-  return new Promise(async (resolve) => {
+  return new Promise(async (resolve, reject) => {
     nodeHtmlToImage({
       html: await getHTML(content),
       type: "png",
@@ -494,12 +494,12 @@ export function renderScore(content: any): Promise<string> {
             if (res.hotlinkUrl) {
               resolve(res.hotlinkUrl)
             } else {
-              log.error(`ERROR: renderScore: empty hotlinkUrl from Gokapi!`)
+              reject(`uploadToGokapi: empty hotlinkUrl from Gokapi!`)
             }
           })
       })
       .catch((error) => {
-        log.error(`ERROR: renderScore: ${error.toString()}`)
+        reject(`htmlToImage: ${error.toString()}`)
       })
   })
 }

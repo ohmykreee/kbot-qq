@@ -223,7 +223,14 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
 
         case "推文":
         case "推文#":
-          const path = new URL(msg[1]).pathname.split("/").filter(n => n)
+          let path: string[] = []
+          // 判断是否为链接
+          try {
+            path = new URL(msg[1]).pathname.split("/").filter(n => n)
+          } catch(error) {
+            resolve("请输入有效的推文链接！")
+            return
+          }
           // 判断推文链接是否有效，path[0] 为用户名，path[2] 为推文id
           if (!(path[0].match(/^[A-Za-z0-9_]+$/) && path[1] === "status" && path[2])) {
             resolve("请输入有效的推文链接！")

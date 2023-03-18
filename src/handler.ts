@@ -112,6 +112,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
             // 检查名字是否格式正确
             if (!user || !user.match(/^[A-Za-z0-9 \[\]_-]+$/)) {
               resolve('请输入有效的用户名！')
+              return
             }
             // 在线查询用户名是否存在
             const token :string | void = await getOsuToken.get()
@@ -202,6 +203,11 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
         axios.get(twitterUrl)
           .then( res => {
             const dom = new JSDOM(res.data, {contentType: "application/xml"})
+            // 检查是否为空
+            if (dom.window.document.getElementsByTagName("item").length === 0) {
+              resolve("好像 ta 最近没有发布推文...")
+              return
+            }
             renderTweets(dom)
               .then((url) => {
                 resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
@@ -246,7 +252,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
                   item.parentNode?.removeChild(item)
                 }
               })
-              if (!dom.window.document.getElementsByTagName("item")) {
+              if (dom.window.document.getElementsByTagName("item").length === 0) {
                 resolve("好像没有找到指定推文，请确认是否为最近发布的推文...")
                 return
               }
@@ -273,6 +279,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
         const tag: string = msg.slice(1).filter(key => !key.includes("[CQ:")).join(" ")
         if (tag && (tag.includes("&") || tag.includes("%26"))) {
           resolve("请求中包含非法字符！")
+          return
         }
         // api 来自 https://docs.anosu.top/
           axios.get(`https://image.anosu.top/pixiv/json?num=1&r18=0&size=original&proxy=i.pixiv.cat&db=0${tag? `&keyword=${tag.replaceAll(" ", "%20")}`:""}`)

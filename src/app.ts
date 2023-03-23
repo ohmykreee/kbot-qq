@@ -173,7 +173,7 @@ function fetchResponse(msg: msg_types, text :string, type :'admin' | 'mp' | 'mai
     // 判断是否为群消息，如是则在消息结尾加上at
     if (res.message_type === "group") {
       res.text = res.text + `\n[CQ:at,qq=${res.user_id}]`
-      echo.fallback = echo.fallback + `\n[CQ:at,qq=${res.user_id}]`
+      echo.fallback = echo.fallback + `\n[to: ${res.user_id}]`
     }
     // 判断是否在开发模式，如是则在消息结尾加上 (Dev mode)
     if (config.debug) {

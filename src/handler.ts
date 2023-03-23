@@ -276,7 +276,11 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
             break
 
       case "抽一张":
-        const tag: string = msg.slice(1).filter(key => !key.includes("[CQ:")).join(" ")
+        let tag: string = msg.slice(1).filter(key => !key.includes("[CQ:")).join(" ")
+        // 遇到违禁词就不传入tag
+        if (["r18", "R18", "发情", "色情"].includes(tag)) {
+          tag = ""
+        }
         if (tag && (tag.includes("&") || tag.includes("%26"))) {
           resolve("请求中包含非法字符！")
           return

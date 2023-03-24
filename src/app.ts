@@ -88,6 +88,8 @@ function ifNeedResponed(data :any) :void {
         user_id: data.sender.user_id as number,
         group_id: data.message_type === 'group'? data.group_id as number:undefined
       }
+      // 处理一些 HTML 字符转义
+      msg.raw_text = msg.raw_text.replaceAll("&amp;", "&").replaceAll("&#91;", "[").replaceAll("&#93;", "]").replaceAll("&#44;", ",")
       // 判断是否包含触发字符：/
       if (Array.from(msg.raw_text)[0] === "/") {
         const command :string = msg.raw_text.slice(1)

@@ -51,6 +51,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
                   <tr> <td> /img [图片] </td> <td> 上传图片并生成链接（记得/img后面要加空格） </td> </tr>
                   <tr> <td> /re [osu!用户名] :[模式数字(可选)] </td> <td> 猫猫机器人崩了用这个备用（只能返回简单数据） </td> </tr>
                   <tr> <td> /pr [osu!用户名] :[模式数字(可选)] </td> <td> 猫猫机器人崩了用这个备用（只能返回简单数据） </td> </tr>
+                  <tr> <td> /pick [pick格式命令] </td> <td> 从 pick格式 命令中随机后回复，例如：今天[想,不想]做爱 </td> </tr>
                   <tr> <td> /mp [命令] </td> <td> 自动房主的多人房间，建议先使用"/mp help" 了解更多 </td> </tr>
                 </table>
   `
@@ -107,8 +108,6 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
 
           case "添加":
             let user :string = msg.slice(2).join(" ")
-            user = user.replaceAll("&#91;", '[')
-            user = user.replaceAll("&#93;", ']')
             // 检查名字是否格式正确
             if (!user || !user.match(/^[A-Za-z0-9 \[\]_-]+$/)) {
               resolve('请输入有效的用户名！')
@@ -333,10 +332,8 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
               break
           }
         }
-        // 获取用户id，以及替换两个奇葩字符 []
+        // 获取用户id
         let user :string = queryMode? msg.slice(1, -1).join(" "):msg.slice(1).join(" ")
-        user = user.replaceAll("&#91;", '[')
-        user = user.replaceAll("&#93;", ']')
         // 判断是否存在用户名
         if (!user || !user.match(/^[A-Za-z0-9 \[\]_-]+$/)) {
           resolve('请输入有效的用户名！')
@@ -433,6 +430,35 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
               })
           }
         }
+        break
+
+      case "pick":
+        const input: string[] = msg.slice(1).join(" ").split("[")
+        const processArray: string[] = []
+        const outputArray: string[] = []
+        // 以 "]" 分割每一个项目，分割出来的项目会保留该分隔符
+        for (const item of input) {
+          if (item.includes("]")) {
+            const index: number = item.indexOf("]") + 1
+            processArray.push(...[item.slice(0, index), item.slice(index)])
+          } else if (item) {
+            processArray.push(item)
+          }
+        }
+        // 判断是否需要随机
+        for (const item of processArray) {
+          if (item.includes("]")) {
+            const random: string[] = item.replaceAll("]", "").split(/,|，/).filter(n => n.length > 0)
+            if (random.length > 1) {
+              outputArray.push(random[Math.floor(Math.random() * random.length)])
+            } else {
+              outputArray.push(item.replaceAll("]", ""))
+            }
+          } else if (item) {
+            outputArray.push(item)
+          }
+        }
+        resolve(outputArray.join(""))
         break
 
       case "mp":

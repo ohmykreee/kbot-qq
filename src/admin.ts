@@ -34,6 +34,7 @@ export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
               <tr> <td> /kbot log [数字] </td> <td> 获取最近指定数目的日志 </td> </tr>
               <tr> <td> /kbot dbadd/dbrm [数据库名] [字符串] </td> <td> 数据库增减操作 </td> </tr>
               <tr> <td> /kbot dblist [数据库名] </td> <td> 返回该数据库的所有内容 </td> </tr>
+              <tr> <td> /kbot echo [字符串] </td> <td> 直接返回字符串，测试 CQ 码等特殊格式 </td> </tr>
             </table>`
           renderAdmin(reply)
             .then((url) => {
@@ -93,9 +94,6 @@ export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
         case "dblist":
           const dbName :"osu" | "food" | "vw50" = msg[2] as "osu" | "food" | "vw50"
           let value :string = msg.slice(3).join(" ")
-          // 处理 osu 用户名中的俩特殊字符
-          value = value.replaceAll("&#91;", '[')
-          value = value.replaceAll("&#93;", ']')
           if (["osu", "food", "vw50"].includes(dbName)) {
             if (msg[1] === "dbadd" && value) {
               await db.push(dbName, value)
@@ -132,6 +130,15 @@ export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
             }
           } else {
             resolve("错误：不正确的数据库名（osu、food、vw50）！")
+          }
+          break
+
+        case "echo":
+          const input: string = msg.slice(2).join(" ")
+          if (input) {
+            resolve(input)
+          } else {
+            resolve("传入了空字符串！")
           }
           break
 

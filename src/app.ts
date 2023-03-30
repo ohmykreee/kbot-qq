@@ -308,7 +308,7 @@ function handleCallback(data :any) :void {
  * @remarks
  * 接收来自 {@link ifNeedResponed()} 的通知的内容，目前只有戳一戳互戳
  *
- * @param data - 非接收消息的 object，内容可参考{@link https://github.com/botuniverse/onebot-11/blob/master/event/meta.md}
+ * @param data - 非接收消息的 object，内容可参考{@link https://github.com/botuniverse/onebot-11/blob/master/event/notice.md}
  * 
  */
 function handleNotify(data :any) :void {

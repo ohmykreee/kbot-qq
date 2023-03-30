@@ -31,6 +31,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
       case "help":
       case "h":
       case "帮助":
+      {
         reply = `
                   狗勾机器人(Kreee bot)主菜单命令：<br>
                 （电脑 QQ 建议关闭 “使用快捷键输入表情”功能）<br>
@@ -64,26 +65,32 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
             resolve("发生致命错误，已上报给管理员。")
           })
         break
+      }
       
       case "关于":
       case "about":
+      {
         reply = `v${info.version} (${config.debug? 'in dev mode':'in production'}) ${config.description}`
         resolve(reply)
         break
-    
+      }
+
       case "ping":
+      {
         reply = 'Woof!'
         resolve(reply)
         break
+      }
 
       case "在线":
+      {
         switch (msg[1]) {
           case "列表":
             reply = "查询列表（排名不分先后）<br>"
             const osuname = await db.read("osu")
-            osuname.map((name) => {
+            for (const name of osuname) {
               reply = reply + `${name}<br>`
-            })
+            }
             reply = reply + `（共 ${osuname.length} 项）`
             renderDefault(reply)
               .then((url) => {
@@ -169,15 +176,19 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
               })
         }
         break
+      }
 
       case "吃什么":
+      {
         // 随机选取 list/food.ts 中的一项回复
         const food = await db.read("food")
         reply = food[Math.floor(Math.random() * food.length)]
         resolve(reply)
         break
+      }
 
       case "星期四":
+      {
         let today :number = new Date().getDay()
         const vw50 = await db.read("vw50")
         // 判断今天是否为星期四，如是则随机选取 list/kfc-vw50.ts 中的一项回复
@@ -189,9 +200,11 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
           resolve(reply)
         } 
         break
+      }
 
       case "推":
       case "推图":
+      {
         const twitterId :string = msg.slice(1).join(" ")
         const twitterUrl :string = msg[0] === "推图"? `${config.nitterUrl}${twitterId}/media/rss`:`${config.nitterUrl}${twitterId}/rss`
         // 判断推特ID是否存在
@@ -225,9 +238,11 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
             }
           })
           break
+        }
 
         case "推文":
         case "推文#":
+        {
           let path: string[] = []
           // 判断是否为链接
           try {
@@ -246,11 +261,13 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
               const dom = new JSDOM(res.data, {contentType: "application/xml"})
               // 删除不需要的 item，只保留所需要的 item
               const itemsArray = [...dom.window.document.getElementsByTagName("item")]
-              itemsArray.map((item) => {
+              for (const item of itemsArray) {
                 if (!item.getElementsByTagName("guid")[0].innerHTML.includes(path[2])) {
                   item.parentNode?.removeChild(item)
+                } else {
+                  break
                 }
-              })
+              }
               if (dom.window.document.getElementsByTagName("item").length === 0) {
                 resolve("好像没有找到指定推文，请确认是否为最近发布的推文...")
                 return
@@ -266,15 +283,17 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
             })
             .catch((error) => {
               if (error.response && error.response.status === 404) {
-                resolve(`未找到该账户：@ ${twitterId}`)
+                resolve(`未找到该账户：@ ${path[0]}`)
               } else {
                 log.error(`fetchTweets: ${error.toString()}`)
                 resolve("发生非致命错误，已上报给管理员。")
               }
             })
             break
+          }
 
       case "抽一张":
+      {
         let tag: string = msg.slice(1).filter(key => !key.includes("[CQ:")).join(" ")
         // 遇到违禁词就不传入tag
         if (["r18", "R18", "发情", "色情"].includes(tag)) {
@@ -305,9 +324,11 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
               }
             })
           break
+        }
 
       case "re":
       case "pr":
+      {
         // 获取用户最近游玩
         const includeFailed :number = msg[0] === "re"? 1:0
         // 判断是否需要指定查询模式
@@ -388,9 +409,11 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
                 resolve("发生非致命错误，已上报给管理员。")
               }
             })
-      break
+        break
+      }
 
       case "img":
+      {
         if (!msg[1]) {
           reply = "未检测到图片，请在“/img ”命令后附带上图片后再次上传！"
           resolve(reply)
@@ -431,40 +454,70 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
           }
         }
         break
+      }
 
       case "pick":
-        const input: string[] = msg.slice(1).join(" ").split("[")
-        const processArray: string[] = []
-        const outputArray: string[] = []
-        // 以 "]" 分割每一个项目，分割出来的项目会保留该分隔符
-        for (const item of input) {
-          if (item.includes("]")) {
-            const index: number = item.indexOf("]") + 1
-            processArray.push(...[item.slice(0, index), item.slice(index)])
-          } else if (item) {
-            processArray.push(item)
-          }
+      {
+        const input: string = msg.slice(1).join(" ")
+        let tempString: string = input
+        const matches: RegExpMatchArray[] = [...input.matchAll(/\[(.*?)\]/g)]
+        const slices: string[] = []
+        // 切割字符
+        for (const match of matches) {
+          const index: number = tempString.indexOf(match[0])
+          slices.push(...[tempString.slice(0, index), match[0]])
+          tempString = tempString.slice(index + match[0].length)
         }
-        // 判断是否需要随机
-        for (const item of processArray) {
-          if (item.includes("]")) {
-            const random: string[] = item.replaceAll("]", "").split(/,|，/).filter(n => n.length > 0)
-            if (random.length > 1) {
-              outputArray.push(random[Math.floor(Math.random() * random.length)])
-            } else {
-              outputArray.push(item.replaceAll("]", ""))
+        // 如果有尾巴将尾巴加上去
+        if (tempString.length !== 0) {
+          slices.push(tempString)
+        }
+        // 处理命中规则的字符
+        const outputSlice: string[] = []
+        for (const slice of slices) {
+          if (slice.includes("[CQ:")) {
+            outputSlice.push("")
+            continue
+          }
+          if (slice.includes("[")) {
+            if (slice.includes(",") || slice.includes("，")){
+              const random: string[] = slice.slice(1, -1).split(/,|，/)
+              if (random.length > 1) {
+                outputSlice.push(random[Math.floor(Math.random() * random.length)])
+                continue
+              }
             }
-          } else if (item) {
-            outputArray.push(item)
+            if (slice.includes("~")) {
+              const random: string[] = slice.slice(1, -1).split("~")
+              if (random.length === 2) {
+                const [min, max] = [parseInt(random[0]), parseInt(random[1])]
+                if (!isNaN(min) && !isNaN(max)) {
+                  outputSlice.push(`${Math.floor(Math.random() * (max - min + 1) + min)}`)
+                  continue
+                }
+              }
+            }
           }
+          outputSlice.push(slice)
         }
-        resolve(outputArray.join(""))
+        // 防止构造恶意的 CQ 码
+        const output: string = outputSlice.join("").replaceAll("[", "").replaceAll("]", "")
+        // 判断是否为空
+        if (output.length !== 0) {
+          resolve(output)
+        } else {
+          resolve("[结果为空]")
+        }
         break
+      }
+
 
       case "mp":
+      {
         reply = "请在群聊中使用该功能！"
         resolve(reply)
         break
+      }
 
       default: 
         resolve()

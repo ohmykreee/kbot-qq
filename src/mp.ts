@@ -100,6 +100,7 @@ class osuahrClass implements osuahr_types {
       case "help":
       case "h":
       case "帮助":
+      {
         const reply :string =
                               `
                               狗勾机器人(Kreee bot)自动多人游戏房间主持命令：<br>
@@ -139,8 +140,10 @@ class osuahrClass implements osuahr_types {
             resolve("发生致命错误，已上报给管理员。")
           })
         break
+      }
   
       case "status":
+      {
         const status :string =`是否正在主持多人游戏：${appStatus.isMP? "是":"否"}<br>${appStatus.isMP? `房间名：${osuahr[0].roomName}`:""}`
         renderDefault(status)
           .then((url) => {
@@ -151,8 +154,10 @@ class osuahrClass implements osuahr_types {
             resolve("发生致命错误，已上报给管理员。")
           })
         break
+      }
   
       case "make":
+      {
         if (!appStatus.isMP) {
           let room :string = msg.slice(2).join(" ")
           if (!room) {
@@ -188,8 +193,10 @@ class osuahrClass implements osuahr_types {
             })
         }
         break
+      }
   
       case "close":
+      {
         if (appStatus.isMP) {
           if (!osuahr[0].isWaitClose) {
             osuahr[0].send(`close`)
@@ -203,8 +210,10 @@ class osuahrClass implements osuahr_types {
           resolve("未开始主持多人游戏，请使用“/mp make [房间名]”来创建房间！")
         }
         break
+      }
   
       case "run":
+      {
         if (appStatus.isMP) {
           let command :string = msg.slice(2).join(" ")
           if (!command) {
@@ -224,10 +233,12 @@ class osuahrClass implements osuahr_types {
           resolve("未开始主持多人游戏，请使用“/mp make [房间名]”来创建房间！")
         }
         break
+      }
   
       // 两个测试用命令，只在开发环境中可用，用于测试是否调用子进程成功/关闭子进程后的程序行为调试
       case "start":
       case "stop":
+      {
         if (config.debug) {
           if (msg[1] === "start") {
             appStatus.isMP = true
@@ -246,6 +257,7 @@ class osuahrClass implements osuahr_types {
           }
           return
         }
+      }
   
       default:
         resolve("未知命令，请使用命令“/mp help”来获取所有可用命令！")

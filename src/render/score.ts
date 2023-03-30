@@ -54,7 +54,7 @@ const getHTML = async (content: any[]): Promise<string> => {
         avatar: recent.user.avatar_url,
         username: recent.user.username,
         mode: modeIcon[recent.mode as keyof typeof modeIcon],
-        time: `${new Date(Date.parse(recent.created_at)).toLocaleString('zh-CN')} UTC+8`
+        time: `${new Date(Date.parse(recent.created_at)).toLocaleString('zh-CN', {timeZoneName: "shortOffset"})}`
       },
       beatmap: {
         title: recent.beatmapset.title,

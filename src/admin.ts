@@ -23,6 +23,7 @@ export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
       case "help":
       case "h":
       case "帮助":
+      {
         reply = `
               狗勾机器人(Kreee bot)管理员命令：<br>
               （仅支持管理员私聊机器人时触发）<br>
@@ -45,30 +46,36 @@ export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
               resolve("发生致命错误，已上报给管理员。")
             })
         break
+      }
       
       case "restart":
+      {
         resolve(`请求成功，将在3秒后以异常状态关闭程序，并等待 daemon 重启程序...`)
         setTimeout(() => {
           handleExit(2)
         }, 3000)
         break
+      }
   
       case "stop":
+      {
         resolve(`请求成功，将在3秒后关闭程序...`)
         setTimeout(() => {
           handleExit(process.exitCode)
         }, 3000)
         break
+      }
   
       case "log":
+      {
         //如果请求中不包含数字则在末尾添加 5 来给予一个默认值
         let count :number = parseInt(msg[2])
         if (isNaN(count)) count = 5
         log.readLog(count)
           .then((logs) => {
-            logs.map((log) => {
+            for (const log of logs) {
               reply = reply + `${log}<br>`
-            })
+            }
             renderAdmin(reply)
               .then((url) => {
                 resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
@@ -82,16 +89,20 @@ export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
             log.error(`readLog: ${error.toString()}`)
           })
         break
+      }
 
         case "reload":
+        {
           await pluginsUnload()
           await pluginsLoad()
           resolve("已重载所有的插件。")
-        break
+          break
+        }
 
         case "dbadd":
         case "dbrm":
         case "dblist":
+        {
           const dbName :"osu" | "food" | "vw50" = msg[2] as "osu" | "food" | "vw50"
           let value :string = msg.slice(3).join(" ")
           if (["osu", "food", "vw50"].includes(dbName)) {
@@ -118,7 +129,9 @@ export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
             } else {
               const data = await db.read(dbName)
               let reply :string = `${dbName}<br>------<br>`
-              data.map((e) => reply = `${reply}${e}<br>`)
+              for (const item of data) {
+                reply = reply + item + "<br>"
+              }
               renderAdmin(reply)
                 .then((url) => {
                   resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
@@ -132,8 +145,10 @@ export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
             resolve("错误：不正确的数据库名（osu、food、vw50）！")
           }
           break
+        }
 
         case "echo":
+        {
           const input: string = msg.slice(2).join(" ")
           if (input) {
             resolve(input)
@@ -141,13 +156,16 @@ export function adminHandler(msg :Array<string>) :Promise<string | string[]> {
             resolve("传入了空字符串！")
           }
           break
+        }
 
         case "kill":
+        {
           // 命令仅在开发模式下可用，测试退出时的清理机制是否正常执行
           if (config.debug) {
             handleExit(process.exitCode)
           }
           break
+        }
   
       default:
         resolve('命令错误，请使用命令“/kbot help”来获取所有可用命令！')

@@ -14,7 +14,7 @@ const getHTML = (dom: JSDOM): string => {
       avatar: dom.window.document.getElementsByTagName("url").item(0)!.innerHTML
     },
     tweets: {
-      time: `${new Date(Date.parse(item.getElementsByTagName('pubDate')[0].innerHTML)).toLocaleString('zh-CN')} UTC+8`,
+      time: `${new Date(Date.parse(item.getElementsByTagName('pubDate')[0].innerHTML)).toLocaleString('zh-CN'), {timeZoneName: "shortOffset"}}`,
       retweet: (item.getElementsByTagName('title')[0].innerHTML.indexOf("RT by") === 0)? item.getElementsByTagName('dc:creator').item(0)!.innerHTML:undefined,
       content: item.getElementsByTagName("description").item(0)!.innerHTML.replace("<![CDATA[", "").replace("]]>", "").replaceAll("style=", "")
     }

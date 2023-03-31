@@ -504,7 +504,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
         const output: string = outputSlice.join("").replaceAll("[", "").replaceAll("]", "")
         // 判断是否为空
         if (output.length !== 0) {
-          resolve(`“${output}”`,"[消息被拦截]")
+          resolve([`“${output}”`, "[消息被拦截]"])
         } else {
           resolve("[结果为空]")
         }

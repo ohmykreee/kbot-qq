@@ -90,11 +90,10 @@ const getHTML = (dom: JSDOM): string => {
       align-self: center;
     }
     .tweets {
-      margin: 1rem 0;
+      margin: 1.5rem 0;
     }
-    .tweets img {
-      width: 100%;
-      margin: 0.5rem 0;
+    .tweets * {
+      max-width: 100%;
     }
     .footer {
       font-family: 'Comfortaa', cursive;

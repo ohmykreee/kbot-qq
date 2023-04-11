@@ -93,7 +93,7 @@ const getHTML = (dom: JSDOM): string => {
       margin: 1.5rem 0;
     }
     .tweets * {
-      max-width: 100%;
+      width: 100%;
     }
     .footer {
       font-family: 'Comfortaa', cursive;

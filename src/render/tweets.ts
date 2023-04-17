@@ -94,6 +94,7 @@ const getHTML = (dom: JSDOM): string => {
     }
     .tweets * {
       width: 100%;
+      margin: 0.25rem;
     }
     .footer {
       font-family: 'Comfortaa', cursive;

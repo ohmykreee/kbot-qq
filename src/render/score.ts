@@ -95,9 +95,9 @@ const getHTML = async (content: any[]): Promise<string> => {
       case "fruits":
         info.score.detailed = `
         <table>
-        <tr> <td>Fruit: ${recent.statistics.count_300}</td> <td>Drop: ${recent.statistics.count_100}</td> </tr>
-        <tr> <td>Droplet: ${recent.statistics.count_50}</td> </tr>
-        <tr> <td>Droplet Miss: ${recent.statistics.count_katu}</td> <td>Miss: ${recent.statistics.count_miss}</td> </tr>
+        <tr> <td>Fruits: ${recent.statistics.count_300}</td> <td>Ticks: ${recent.statistics.count_100}</td> </tr>
+        <tr> <td>DRP: ${recent.statistics.count_50}</td> </tr>
+        <tr> <td>DRP Miss: ${recent.statistics.count_katu}</td> <td>Miss: ${recent.statistics.count_miss}</td> </tr>
         </table>
         `
       break

@@ -12,6 +12,7 @@ const config :botconf = {
   osuIrcIntervalMin: 5,
   osuIrcIntervalMax: 10,
   nitterUrl: "https://nitter.example.site/",
+  pixivReverseUrl: "pixiv.example.site",
   maxLogHistory: 100,
   osuClientId: 114514,
   osuClientSecret: "this_is_a_very_long_secret_for_osu",
@@ -35,6 +36,7 @@ interface botconf {
   osuClientId :number
   osuClientSecret :string
   nitterUrl :string
+  pixivReverseUrl: string
   maxLogHistory :number
   ahrCWD :string
   dbCWD :string

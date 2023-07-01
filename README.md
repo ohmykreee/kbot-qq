@@ -43,6 +43,7 @@ npm install
   osuClientId :number  // osu!api 客户端 ID
   osuClientSecret :string  // osu!api 客户端 token
   nitterUrl :string  // nitter 实例的链接
+  pixivReverseUrl: string // Pixiv 图片反向代理地址，详情请参考：https://pixiv.cat/reverseproxy.html
   maxLogHistory :number  // 最大保存的日志项数
   ahrCWD :string  // osu-ahr 的目录（最好为绝对目录）
   dbCWD :string // bot 数据库存储的目录（最好为绝对目录）
@@ -63,6 +64,7 @@ const config :botconf = {
   osuIrcIntervalMin: 5,
   osuIrcIntervalMax: 10,
   nitterUrl: "https://nitter.example.site/",
+  pixivReverseUrl: "pixiv.example.site",
   maxLogHistory: 100,
   osuClientId: 114514,
   osuClientSecret: "this_is_a_very_long_secret_for_osu",
@@ -86,6 +88,7 @@ interface botconf {
   osuClientId :number
   osuClientSecret :string
   nitterUrl :string
+  pixivReverseUrl: string
   maxLogHistory :number
   ahrCWD :string
   dbCWD :string

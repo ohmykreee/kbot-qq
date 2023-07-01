@@ -304,7 +304,7 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
           return
         }
         // api 来自 https://docs.anosu.top/
-          axios.get(`https://image.anosu.top/pixiv/json?num=1&r18=0&size=original&proxy=i.pixiv.re&db=0${tag? `&keyword=${tag.replaceAll(" ", "%20")}`:""}`)
+          axios.get(`https://image.anosu.top/pixiv/json?num=1&r18=0&size=original&proxy=${config.pixivReverseUrl}&db=0${tag? `&keyword=${tag.replaceAll(" ", "%20")}`:""}`)
             .then(res => {
               if (res.data.length !== 0) {
                 const data = res.data[0]

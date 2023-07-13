@@ -36,7 +36,7 @@
     "jsdom": "^21.1.0",
     "lowdb": "^4.0.1",
     "node-html-to-image": "^3.3.0",
-    "nodemon": "^2.0.20",
+    "nodemon": "^3.0.1",
     "npm": "^9.4.1",
     "rosu-pp": "^0.9.4",
     "slate-irc": "^0.9.1",

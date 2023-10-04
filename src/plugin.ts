@@ -7,7 +7,7 @@ import child_process from 'child_process'
 
 class PluginClass implements plugin_types {
   constructor(path :string) {
-    this._childProcess = child_process.spawn(process.execPath, ['app.js'], { cwd: path, stdio: [ 'pipe', 'inherit', 'inherit', 'ipc' ] })
+    this._childProcess = child_process.spawn(process.execPath, ['app.js'], { cwd: path, stdio: [ 'pipe', 'inherit', 'inherit', 'ipc' ], env: { NODE_OPTIONS: '--max-old-space-size=512' } })
     this._register()
 
     this._path = path
@@ -41,7 +41,7 @@ class PluginClass implements plugin_types {
   private _errHandler() {
     log.error(`Plugin: ${this.name} quit, version: ${this.version}. Will restart after 3s!`)
     setTimeout(() => {
-      this._childProcess = child_process.spawn(process.execPath, ['app.js'], { cwd: this._path, stdio: [ 'pipe', 'inherit', 'inherit', 'ipc' ] })
+      this._childProcess = child_process.spawn(process.execPath, ['app.js'], { cwd: this._path, stdio: [ 'pipe', 'inherit', 'inherit', 'ipc' ], env: { NODE_OPTIONS: '--max-old-space-size=512' } })
       this._register()
     }, 3000)
   }

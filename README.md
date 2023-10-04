@@ -68,8 +68,8 @@ const config :botconf = {
   maxLogHistory: 100,
   osuClientId: 114514,
   osuClientSecret: "this_is_a_very_long_secret_for_osu",
-  ahrCWD: "/app/osuahr",
-  dbCWD: "/app/botdb"
+  ahrCWD: "/kbot/osuahr",
+  dbCWD: "/kbot/botdb"
 }
 
 // 以下内容请勿修改！

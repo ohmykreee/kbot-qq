@@ -153,7 +153,8 @@ export function renderAdmin(content: string): Promise<string> {
       html: getHTML(content),
       type: "png",
       encoding: "binary",
-      transparent: true
+      transparent: true,
+      puppeteerArgs: { args: [ '--disable-gpu', '--disable-setuid-sandbox', '--no-sandbox', '--no-zygote' ] }
     })
       .then(async (buffer) => {
         uploadToGokapi(buffer as Buffer, `kbot-reply-admin-${randomBytes(5).toString('hex')}.png`, 1, 0)

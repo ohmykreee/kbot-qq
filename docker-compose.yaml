@@ -1,0 +1,15 @@
+version: "3"
+services:
+  kbot:
+    image: kbot:latest
+    container_name: kbot
+    environment:
+      - PUID=1000
+      - PGID=100
+    network_mode: bridge
+    volumes:
+      - /path/to/kbot/botconfig.ts:/app/botconfig.ts
+      - /path/to/kbot/osuahr/local.json:/app/osuahr/config/local.json
+      - /path/to/kbot/plugins:/app/plugins
+      - /path/to/kbot/botdb:/app/botdb
+    restart: unless-stopped

@@ -1,0 +1,28 @@
+name: Build docker image and upload to artifacts
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@master
+
+      - name: Build docker image
+        run: docker build -t kbot:latest .
+
+      - name: Export docker image
+        run: docker save -o kbot-docker-image.tar kbot:latest
+
+      - name: Upload artifact
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-result
+          path: kbot-docker-image.tar
+          if-no-files-found: error

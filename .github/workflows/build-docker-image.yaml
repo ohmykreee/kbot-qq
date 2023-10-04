@@ -23,6 +23,6 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v3
         with:
-          name: build-result
+          name: docker-image
           path: kbot-docker-image.tar
           if-no-files-found: error

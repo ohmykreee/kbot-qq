@@ -15,8 +15,8 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-COPY --from=build /build/dist/* ./
-COPY --from=build /build/node_modules/ ./
-COPY --from=build /build/osuahr/ ./
+COPY --from=build /build/dist/ ./
+COPY --from=build /build/node_modules/ ./node_modules/
+COPY --from=build /build/osuahr/ ./osuahr/
 
 CMD ["node", "src/app.js"]

@@ -1,7 +1,7 @@
 # Install deps
 FROM node:18-alpine AS build
 
-RUN apk update && apk add rust cargo
+RUN apk update && apk add rust cargo chromium
 
 WORKDIR /build
 COPY . /build

@@ -23,15 +23,7 @@ RUN apk add --no-cache \
 
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-RUN addgroup -S kbot && adduser -S -G kbot kbot \
-    && mkdir -p /home/kbot/Downloads /app /kbot \
-    && chown -R kbot:kbot /home/kbot \
-    && chown -R kbot:kbot /app \
-    && chown -R kbot:kbot /kbot
-
-USER kbot
-
-WORKDIR /kbot
+WORKDIR /app
 COPY --from=build /build/dist/ ./
 COPY --from=build /build/node_modules/ ./node_modules/
 COPY --from=build /build/osuahr/ ./osuahr/

@@ -206,6 +206,8 @@ const getHTML = (dom: JSDOM): string => {
  * 
  * @returns Promise<string>，返回值为结果图片的 Gokapi 的直链
  * 
+ * @deprecated
+ * 
  */
 export function renderTweets(dom: JSDOM): Promise<string> {
   return new Promise((resolve, reject) => {

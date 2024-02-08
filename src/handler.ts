@@ -3,7 +3,7 @@ import config from "../botconfig.js"
 import { log } from "./logger.js"
 import db from "./db.js"
 import info from '../package.json' assert { type: "json" }
-import { getOSUStats, updateOSUStats } from "./online.js"
+// import { getOSUStats, updateOSUStats } from "./online.js"
 import { getOsuToken, uploadToGokapi } from "./utils.js"
 import { renderDefault, renderTweets, renderScore } from "./render/_middleware.js"
 import { randomBytes } from "crypto"
@@ -39,10 +39,10 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
                   <tr> <td> /help </td> <td> 输出该帮助信息 </td> </tr>
                   <tr> <td> /ping </td> <td> 康康机器人有没有在摸鱼 </td> </tr>
                   <tr> <td> /关于 </td> <td> 关于这个机器人的一切 </td> </tr>
-                  <tr> <td> /在线 </td> <td> 返回 osu! 查询列表里在线玩家 </td> </tr>
-                  <tr> <td> /在线 列表 </td> <td> 返回 osu! 在线查询列表里的所有人 </td> </tr>
-                  <tr> <td> /在线 添加 </td> <td> 添加一项至 osu! 在线查询列表 </td> </tr>
-                  <tr> <td> /在线 更新 </td> <td> 立即请求一次 osu! 在线列表的更新 </td> </tr>
+                  <!-- <tr> <td> /在线 </td> <td> 返回 osu! 查询列表里在线玩家 </td> </tr> -->
+                  <!-- <tr> <td> /在线 列表 </td> <td> 返回 osu! 在线查询列表里的所有人 </td> </tr> -->
+                  <!-- <tr> <td> /在线 添加 </td> <td> 添加一项至 osu! 在线查询列表 </td> </tr> -->
+                  <!-- <tr> <td> /在线 更新 </td> <td> 立即请求一次 osu! 在线列表的更新 </td> </tr> -->
                   <tr> <td> /吃什么 </td> <td> 不知道今天中午/晚上吃什么？问我！ </td> </tr>
                   <tr> <td> /星期四 </td> <td> 星期四？想什么呢！ </td> </tr>
                   <tr> <td> /抽一张 [tag(可选)] </td> <td> 抽一张 Pixiv 图（docs.anosu.top） </td> </tr>
@@ -84,97 +84,98 @@ export function msgHandler(msg :Array<string>, qqid :number) :Promise<string | s
 
       case "在线":
       {
-        switch (msg[1]) {
-          case "列表":
-            reply = "查询列表（排名不分先后）<br>"
-            const osuname = await db.read("osu")
-            for (const name of osuname) {
-              reply = reply + `${name}<br>`
-            }
-            reply = reply + `（共 ${osuname.length} 项）`
-            renderDefault(reply)
-              .then((url) => {
-                resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
-              })
-              .catch((error) => {
-                log.error(`renderDefault: ${error.toString()}`)
-                resolve("发生致命错误，已上报给管理员。")
-              })
-            break
+        resolve(`该功能已停用。\n（如需使用该功能请使用版本 < 2.10.0 的 kbot-qq）`)
+        // switch (msg[1]) {
+        //   case "列表":
+        //     reply = "查询列表（排名不分先后）<br>"
+        //     const osuname = await db.read("osu")
+        //     for (const name of osuname) {
+        //       reply = reply + `${name}<br>`
+        //     }
+        //     reply = reply + `（共 ${osuname.length} 项）`
+        //     renderDefault(reply)
+        //       .then((url) => {
+        //         resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+        //       })
+        //       .catch((error) => {
+        //         log.error(`renderDefault: ${error.toString()}`)
+        //         resolve("发生致命错误，已上报给管理员。")
+        //       })
+        //     break
 
-          case "更新":
-            // 运行 online.ts 中的 updateOSUStats() 以更新在线列表
-            updateOSUStats()
-              .then((replytext) => {
-                resolve(replytext)
-              })
-              .catch((replytext) => {
-                resolve(replytext.toString())
-              })
-            break
+        //   case "更新":
+        //     // 运行 online.ts 中的 updateOSUStats() 以更新在线列表
+        //     updateOSUStats()
+        //       .then((replytext) => {
+        //         resolve(replytext)
+        //       })
+        //       .catch((replytext) => {
+        //         resolve(replytext.toString())
+        //       })
+        //     break
 
-          case "添加":
-            let user :string = msg.slice(2).join(" ")
-            // 检查名字是否格式正确
-            if (!user || !user.match(/^[A-Za-z0-9 \[\]_-]+$/)) {
-              resolve('请输入有效的用户名！')
-              return
-            }
-            // 在线查询用户名是否存在
-            const token :string | void = await getOsuToken.get()
-            if (!token) { resolve("发生非致命错误，已上报给管理员。") }
-            axios.get(`https://osu.ppy.sh/api/v2/users/${user}`, {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            })
-              .then(async (res) => {
-                const username :string = res.data.username
-                const currList = await db.read("osu")
-                if (username && !currList.includes(username)) {
-                  await db.push("osu", username)
-                  resolve(`成功添加玩家：${username}`)
-                } else if (currList.includes(username)) {
-                  resolve(`查询列表中已经存在玩家：${username}`)
-                } else {
-                  log.error(`add-queryer: when get user: empty username`)
-                  resolve("发生非致命错误，已上报给管理员。")
-                }
-              })
-              .catch((error) => {
-                if (error.response && error.response.status === 404) {
-                  renderDefault(`未找到该玩家：${user}`)
-                    .then((url) => {
-                      resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
-                    })
-                    .catch((error) => {
-                      log.error(`renderDefault: ${error.toString()}`)
-                      resolve("发生致命错误，已上报给管理员。")
-                    })
-                } else {
-                  log.error(`add-queryer: when get user-id: ${error.toString()}`)
-                  resolve("发生非致命错误，已上报给管理员。")
-                }
-              })
-            break
+        //   case "添加":
+        //     let user :string = msg.slice(2).join(" ")
+        //     // 检查名字是否格式正确
+        //     if (!user || !user.match(/^[A-Za-z0-9 \[\]_-]+$/)) {
+        //       resolve('请输入有效的用户名！')
+        //       return
+        //     }
+        //     // 在线查询用户名是否存在
+        //     const token :string | void = await getOsuToken.get()
+        //     if (!token) { resolve("发生非致命错误，已上报给管理员。") }
+        //     axios.get(`https://osu.ppy.sh/api/v2/users/${user}`, {
+        //       headers: {
+        //         'Authorization': `Bearer ${token}`
+        //       }
+        //     })
+        //       .then(async (res) => {
+        //         const username :string = res.data.username
+        //         const currList = await db.read("osu")
+        //         if (username && !currList.includes(username)) {
+        //           await db.push("osu", username)
+        //           resolve(`成功添加玩家：${username}`)
+        //         } else if (currList.includes(username)) {
+        //           resolve(`查询列表中已经存在玩家：${username}`)
+        //         } else {
+        //           log.error(`add-queryer: when get user: empty username`)
+        //           resolve("发生非致命错误，已上报给管理员。")
+        //         }
+        //       })
+        //       .catch((error) => {
+        //         if (error.response && error.response.status === 404) {
+        //           renderDefault(`未找到该玩家：${user}`)
+        //             .then((url) => {
+        //               resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+        //             })
+        //             .catch((error) => {
+        //               log.error(`renderDefault: ${error.toString()}`)
+        //               resolve("发生致命错误，已上报给管理员。")
+        //             })
+        //         } else {
+        //           log.error(`add-queryer: when get user-id: ${error.toString()}`)
+        //           resolve("发生非致命错误，已上报给管理员。")
+        //         }
+        //       })
+        //     break
 
-          default:
-            // 运行 online.ts 中的 getOSUStats() 获取回复消息内容
-            getOSUStats()
-              .then((replytext) => {
-                renderDefault(replytext)
-                  .then((url) => {
-                    resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
-                  })
-                  .catch((error) => {
-                    log.error(`renderDefault: ${error.toString()}`)
-                    resolve("发生致命错误，已上报给管理员。")
-                  })
-              })
-              .catch((replytext) => {
-                resolve(replytext.toString())
-              })
-        }
+        //   default:
+        //     // 运行 online.ts 中的 getOSUStats() 获取回复消息内容
+        //     getOSUStats()
+        //       .then((replytext) => {
+        //         renderDefault(replytext)
+        //           .then((url) => {
+        //             resolve([`[CQ:image,file=${url}]`,`图片消息发送失败了＞﹏＜，请前往 ${url} 查看！（链接有效期 1 天）`])
+        //           })
+        //           .catch((error) => {
+        //             log.error(`renderDefault: ${error.toString()}`)
+        //             resolve("发生致命错误，已上报给管理员。")
+        //           })
+        //       })
+        //       .catch((replytext) => {
+        //         resolve(replytext.toString())
+        //       })
+        // }
         break
       }
 

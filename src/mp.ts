@@ -2,7 +2,7 @@ import child_process from 'child_process'
 import { appStatus } from "./app.js"
 import { renderDefault } from './render/_middleware.js'
 import { log } from "./logger.js"
-import { stopIRC, startIRC } from "./online.js"
+// import { stopIRC, startIRC } from "./online.js"
 import config from "../botconfig.js"
 
 const osuahr :osuahr_types[] = []
@@ -66,9 +66,9 @@ class osuahrClass implements osuahr_types {
     appStatus.isMP = false
     this.roomName = ""
     this.isWaitClose = false
-    setTimeout(async () => {
-      await startIRC()
-    }, 3000)
+    // setTimeout(async () => {
+    //   await startIRC()
+    // }, 3000)
     osuahr.splice(0, osuahr.length)
   }
 
@@ -165,7 +165,7 @@ class osuahrClass implements osuahr_types {
             return
           }
           appStatus.isMP = true
-          await stopIRC()
+          // await stopIRC()
           osuahr.push(new osuahrClass(room))
           renderDefault(`注意：主持多人游戏期间查询在线功能将暂停！<br>5s 后开始创建房间并主持：${osuahr[0].roomName}`)
             .then((url) => {
@@ -242,7 +242,7 @@ class osuahrClass implements osuahr_types {
         if (config.debug) {
           if (msg[1] === "start") {
             appStatus.isMP = true
-            await stopIRC()
+            // await stopIRC()
             log.debug("osu-ahr: stop online-query IRC")
             osuahr.push(new osuahrClass("*以 Debug 方式启动*"))
             setTimeout(() => {

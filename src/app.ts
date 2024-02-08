@@ -6,7 +6,7 @@ import { WebSocket } from "ws"
 import { msgHandler } from "./handler.js"
 import { adminHandler } from "./admin.js"
 import { mpHandler } from "./mp.js"
-import { startIRC } from "./online.js"
+// import { startIRC } from "./online.js"
 import { log } from "./logger.js"
 import { pluginsLoad, pluginsUnload, pluginReceiveMsg } from "./plugin.js"
 
@@ -50,7 +50,7 @@ process.once('SIGUSR2', () => {process.stdin.resume(); handleExit(process.exitCo
  */
 function handleStart() :void {
   // 启动 online.ts 中的 slate-irc 初始化
-  startIRC()
+  // startIRC()
   // 载入所有的插件
   pluginsLoad()
 }

@@ -56,7 +56,7 @@ const config :botconf = {
   cqhttpUrl: "ws://localhost:1234",
   cqhttpToken: "this_is_a_very_long_token_for_cqhttp",
   adminQQ: [123456789, 987654321],
-  description: "实用化，固定的命令与简单的触发关键字符。",
+  description: "无维护/继续开发计划，等待重构。",
   gokapiUrl: "https://gokapi.example.site/api/",
   gokapiToken: "this_is_a_very_long_token_for_gokapi",
   osuIrcUsername: "Kreee",

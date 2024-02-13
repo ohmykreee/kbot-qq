@@ -87,7 +87,7 @@ const getHTML = async (content: any[]): Promise<string> => {
         info.score.detailed = `
         <table>
         <tr> <td>Great: ${recent.statistics.count_300}</td> <td>Good: ${recent.statistics.count_100}</td> </tr>
-        <tr> <td>Bad: ${recent.statistics.count_50}</td> <td>Miss: ${recent.statistics.count_100}</td> </tr>
+        <tr> <td>Miss: ${recent.statistics.count_miss}</td> </tr>
         </table>
         `
       break
@@ -160,11 +160,11 @@ const getHTML = async (content: any[]): Promise<string> => {
             mode: recent.mode_int,
             mods: mod,
             acc: recent.accuracy,
-            nGeki: recent.statistics.count_geki,
-            nKatu: recent.statistics.count_katu,
+            nGeki: recent.statistics.count_geki? recent.statistics.count_geki:undefined,
+            nKatu: recent.statistics.count_katu? recent.statistics.count_katu:undefined,
             n300: recent.statistics.count_300,
             n100: recent.statistics.count_100,
-            n50: recent.statistics.count_50,
+            n50: recent.statistics.count_50? recent.statistics.count_50:undefined,
             nMisses: recent.statistics.count_miss,
             combo: recent.max_combo,
             // passedObjects: recent.statistics.count_geki + recent.statistics.count_katu + recent.statistics.count_300 + recent.statistics.count_100 + recent.statistics.count_50 + recent.statistics.count_miss,
